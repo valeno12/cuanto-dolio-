@@ -58,4 +58,13 @@ class Room extends Model
     {
         return $this->hasOne(Participant::class)->where('role', ParticipantRole::Admin);
     }
+
+    /**
+     * Get all settlements for this room.
+     */
+    public function settlements(): HasMany
+    {
+        return $this->hasMany(Settlement::class);
+    }
 }
+

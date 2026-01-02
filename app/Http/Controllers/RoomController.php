@@ -3,10 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Enums\ParticipantRole;
+use App\Events\ParticipantJoined;
+use App\Events\RoomLocked;
 use App\Http\Requests\CreateRoomRequest;
 use App\Http\Requests\CreateVirtualParticipantRequest;
 use App\Http\Requests\JoinRoomRequest;
 use App\Models\Room;
+use App\Models\Settlement;
+use App\Services\DebtSimplificationService;
 use App\Services\ParticipantSessionService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -111,6 +115,9 @@ class RoomController extends Controller
             role: ParticipantRole::Member
         );
 
+        // Broadcast to other participants in the room
+        broadcast(new ParticipantJoined($participant))->toOthers();
+
         return redirect()
             ->route('rooms.show', $room->code)
             ->withCookie($this->sessionService->makeCookie($participant->session_token));
@@ -121,11 +128,14 @@ class RoomController extends Controller
      */
     public function storeVirtualParticipant(CreateVirtualParticipantRequest $request, Room $room): RedirectResponse
     {
-        $this->sessionService->createParticipant(
+        $participant = $this->sessionService->createParticipant(
             room: $room,
             name: $request->validated('name'),
             role: ParticipantRole::Virtual
         );
+
+        // Broadcast to other participants in the room
+        broadcast(new ParticipantJoined($participant))->toOthers();
 
         return redirect()
             ->route('rooms.show', $room->code)
@@ -145,5 +155,50 @@ class RoomController extends Controller
         } while (Room::where('code', $code)->exists());
 
         return $code;
+    }
+
+    /**
+     * Lock a room (admin only). Prevents adding new expenses.
+     */
+    public function lock(Request $request, Room $room): RedirectResponse
+    {
+        $participant = $request->participant();
+
+        // Verify participant is admin of this room
+        if (!$participant || $participant->room_id !== $room->id) {
+            abort(403, 'No pertenecés a esta sala.');
+        }
+
+        if (!$participant->isAdmin()) {
+            abort(403, 'Solo el admin puede cerrar la sala.');
+        }
+
+        if ($room->is_locked) {
+            return redirect()
+                ->route('rooms.show', $room->code)
+                ->with('info', 'La sala ya está cerrada.');
+        }
+
+        // Calculate settlements and save to database
+        $debtService = app(DebtSimplificationService::class);
+        $settlements = $debtService->calculate($room);
+
+        foreach ($settlements as $settlement) {
+            Settlement::create([
+                'room_id' => $room->id,
+                'from_participant_id' => $settlement['from']['id'],
+                'to_participant_id' => $settlement['to']['id'],
+                'amount' => $settlement['amount'],
+            ]);
+        }
+
+        $room->update(['is_locked' => true]);
+
+        // Broadcast to all participants
+        broadcast(new RoomLocked($room))->toOthers();
+
+        return redirect()
+            ->route('rooms.show', $room->code)
+            ->with('success', 'Sala cerrada. ¡Ahora pueden ver quién le paga a quién!');
     }
 }

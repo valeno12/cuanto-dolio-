@@ -23,8 +23,9 @@ export interface Expense {
     id: string;
     room_id: string;
     payer_id: string;
-    amount: string; // Decimal comes as string from Laravel
     description: string;
+    amount: string; // Decimal comes as string from Laravel
+    category?: string;
     created_at: string;
     updated_at: string;
     payer?: Participant;

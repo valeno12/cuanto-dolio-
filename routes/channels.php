@@ -1,7 +1,6 @@
 <?php
 
-use App\Models\Room;
-use Illuminate\Http\Request;
+use App\Models\Participant;
 use Illuminate\Support\Facades\Broadcast;
 
 /*
@@ -18,14 +17,8 @@ use Illuminate\Support\Facades\Broadcast;
 /**
  * Authorize a participant to listen to a room's private channel.
  * 
- * We use a custom authorization since we're not using Laravel's auth system.
+ * The $user parameter is now the Participant (resolved by our custom guard).
  */
-Broadcast::channel('room.{roomId}', function (Request $request, string $roomId) {
-    $participant = $request->participant();
-    
-    if (!$participant) {
-        return false;
-    }
-    
-    return $participant->room_id === $roomId;
+Broadcast::channel('room.{roomId}', function (Participant $user, string $roomId) {
+    return $user->room_id === $roomId;
 });

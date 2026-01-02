@@ -31,6 +31,7 @@ class CreateExpenseRequest extends FormRequest
         return [
             'description' => ['required', 'string', 'max:255'],
             'amount' => ['required', 'numeric', 'min:0.01', 'max:999999.99'],
+            'category' => ['nullable', 'string', 'max:50'],
             'payer_id' => [
                 'required',
                 'uuid',

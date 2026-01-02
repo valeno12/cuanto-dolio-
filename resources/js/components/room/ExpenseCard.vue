@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import Avatar from '@/components/ui/Avatar.vue';
 import Card from '@/components/ui/Card.vue';
+import { CATEGORIES, getCategory } from '@/constants/categories'; // Assume alias setup
 import type { Expense } from '@/types';
 import { computed, ref } from 'vue';
 
@@ -33,12 +34,11 @@ const formattedDate = computed(() => {
     return new Intl.DateTimeFormat('es-AR', {
         day: 'numeric',
         month: 'short',
-        hour: '2-digit',
-        minute: '2-digit',
     }).format(date);
 });
 
-const splitCount = computed(() => props.expense.splits?.length || 0);
+// Category Logic
+const categoryDef = computed(() => getCategory(props.expense.category));
 
 const handleEdit = () => {
     showMenu.value = false;
@@ -52,104 +52,65 @@ const handleDelete = () => {
 </script>
 
 <template>
-    <Card padding="sm" class="animate-fade-in">
-        <div class="flex items-start gap-3">
-            <!-- Payer avatar -->
-            <Avatar v-if="expense.payer" :name="expense.payer.name" size="md" />
+    <div class="group relative overflow-visible rounded-2xl border border-slate-800 bg-[#161b26] p-4 transition-all hover:bg-[#1a202e] hover:border-slate-700">
+        <div class="flex items-center gap-4">
+            <!-- Category Icon -->
+            <div :class="['flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-2xl shadow-inner border border-white/5', categoryDef.color, 'bg-opacity-20']">
+                {{ categoryDef.icon }}
+            </div>
 
             <!-- Content -->
-            <div class="min-w-0 flex-1">
-                <div class="flex items-start justify-between gap-2">
-                    <div>
-                        <p class="truncate font-medium text-white">
-                            {{ expense.description }}
-                        </p>
-                        <p class="text-sm text-slate-400">
-                            <span class="text-secondary-400">{{ expense.payer?.name }}</span>
-                            pagó
-                        </p>
-                    </div>
-
-                    <div class="flex items-start gap-2">
-                        <div class="shrink-0 text-right">
-                            <p class="font-bold text-white">
-                                {{ formatCurrency(expense.amount) }}
-                            </p>
-                            <p class="text-xs text-slate-500">
-                                {{ formattedDate }}
-                            </p>
-                        </div>
-
-                        <!-- Actions menu -->
-                        <div v-if="canEdit" class="relative">
-                            <button @click="showMenu = !showMenu" class="touch-target p-1 text-slate-500 transition-colors hover:text-white">
-                                <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
-                                    <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
-                                </svg>
-                            </button>
-
-                            <!-- Dropdown menu -->
-                            <Transition
-                                enter-active-class="transition ease-out duration-100"
-                                enter-from-class="transform opacity-0 scale-95"
-                                enter-to-class="transform opacity-100 scale-100"
-                                leave-active-class="transition ease-in duration-75"
-                                leave-from-class="transform opacity-100 scale-100"
-                                leave-to-class="transform opacity-0 scale-95"
-                            >
-                                <div v-if="showMenu" class="glass absolute top-8 right-0 z-10 w-36 rounded-xl py-1 shadow-xl" @click.stop>
-                                    <button
-                                        @click="handleEdit"
-                                        class="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-white transition-colors hover:bg-white/10"
-                                    >
-                                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path
-                                                stroke-linecap="round"
-                                                stroke-linejoin="round"
-                                                stroke-width="2"
-                                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                                            />
-                                        </svg>
-                                        Editar
-                                    </button>
-                                    <button
-                                        @click="handleDelete"
-                                        class="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-red-400 transition-colors hover:bg-white/10"
-                                    >
-                                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path
-                                                stroke-linecap="round"
-                                                stroke-linejoin="round"
-                                                stroke-width="2"
-                                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                                            />
-                                        </svg>
-                                        Eliminar
-                                    </button>
-                                </div>
-                            </Transition>
-
-                            <!-- Click outside to close -->
-                            <div v-if="showMenu" class="fixed inset-0 z-0" @click="showMenu = false" />
-                        </div>
-                    </div>
+            <div class="flex min-w-0 flex-1 flex-col justify-center">
+                <div class="flex items-baseline justify-between">
+                    <p class="truncate font-medium text-white text-base leading-tight">
+                        {{ expense.description }}
+                    </p>
+                    <span class="shrink-0 font-bold text-white text-base">
+                        {{ formatCurrency(expense.amount) }}
+                    </span>
+                </div>
+                
+                <div class="flex items-center justify-between mt-1">
+                    <p class="text-xs text-slate-400">
+                        <span class="font-medium text-slate-300">{{ expense.payer?.name }}</span> 
+                        <span class="text-slate-600 mx-1">•</span>
+                        {{ categoryDef.label }}
+                    </p>
+                    <span class="text-[10px] text-slate-500">
+                        {{ formattedDate }}
+                    </span>
                 </div>
 
-                <!-- Splits preview -->
-                <div v-if="splitCount > 0" class="mt-2 border-t border-white/5 pt-2">
-                    <div class="flex items-center gap-1 text-xs text-slate-500">
-                        <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"
-                            />
-                        </svg>
-                        <span>Dividido entre {{ splitCount }} personas</span>
+                <!-- Avatars Mini -->
+                <div v-if="expense.splits && expense.splits.length > 0" class="mt-2.5 flex -space-x-1.5 overflow-hidden">
+                    <Avatar 
+                        v-for="split in expense.splits.slice(0, 5)" 
+                        :key="split.id"
+                        :name="split.participant?.name || '?'" 
+                        size="xs"
+                        class="ring-2 ring-[#161b26] h-5 w-5 text-[9px]"
+                    />
+                    <div v-if="expense.splits.length > 5" class="flex h-5 w-5 items-center justify-center rounded-full bg-slate-800 text-[9px] text-slate-400 ring-2 ring-[#161b26]">
+                        +{{ expense.splits.length - 5 }}
                     </div>
                 </div>
             </div>
+            
+            <!-- Actions (Absolute positioning for touch targets) -->
+            <button 
+                v-if="canEdit" 
+                @click.stop="showMenu = !showMenu" 
+                class="absolute -top-2 -right-2 hidden h-8 w-8 items-center justify-center rounded-full bg-slate-700 text-slate-300 opacity-0 shadow-lg transition-all hover:bg-slate-600 group-hover:flex group-hover:opacity-100 z-10"
+            >
+                ⋮
+            </button>
         </div>
-    </Card>
+
+        <!-- Menu Dropdown -->
+        <div v-if="showMenu" class="absolute right-2 top-8 z-20 w-32 overflow-hidden rounded-xl bg-slate-800 shadow-xl ring-1 ring-white/10" @click.stop>
+            <button @click="handleEdit" class="w-full px-4 py-3 text-left text-sm text-white hover:bg-white/5 active:bg-white/10">Editar</button>
+            <button @click="handleDelete" class="w-full px-4 py-3 text-left text-sm text-red-400 hover:bg-white/5 active:bg-white/10">Eliminar</button>
+        </div>
+        <div v-if="showMenu" class="fixed inset-0 z-10" @click="showMenu = false"></div>
+    </div>
 </template>

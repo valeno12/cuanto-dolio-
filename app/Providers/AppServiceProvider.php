@@ -2,9 +2,12 @@
 
 namespace App\Providers;
 
-use Illuminate\Http\Request;
-use Illuminate\Support\ServiceProvider;
+use App\Auth\ParticipantGuard;
 use App\Models\Participant;
+use App\Services\ParticipantSessionService;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -25,5 +28,14 @@ class AppServiceProvider extends ServiceProvider
         Request::macro('participant', function (): ?Participant {
             return $this->attributes->get('participant');
         });
+
+        // Register the custom participant guard driver
+        Auth::extend('participant', function ($app, $name, array $config) {
+            return new ParticipantGuard(
+                $app['request'],
+                $app->make(ParticipantSessionService::class)
+            );
+        });
     }
 }
+

@@ -22,6 +22,7 @@ class Expense extends Model
         'payer_id',
         'amount',
         'description',
+        'category',
     ];
 
     /**

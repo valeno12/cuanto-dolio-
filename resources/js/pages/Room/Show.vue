@@ -1,207 +1,223 @@
 <script setup lang="ts">
-import AddParticipantModal from '@/components/room/AddParticipantModal.vue';
-import BalanceSummary from '@/components/room/BalanceSummary.vue';
-import ExpenseCard from '@/components/room/ExpenseCard.vue';
-import ExpenseForm from '@/components/room/ExpenseForm.vue';
-import ParticipantList from '@/components/room/ParticipantList.vue';
-import Card from '@/components/ui/Card.vue';
-import Modal from '@/components/ui/Modal.vue';
+import BottomNav from '@/components/room/BottomNav.vue';
+import ExpensesView from '@/components/room/ExpensesView.vue';
+import PaymentDashboard from '@/components/room/PaymentDashboard.vue';
+import ProfileView from '@/components/room/ProfileView.vue';
 import { useRoomChannel } from '@/composables/useRoomChannel';
-import type { Expense, RoomShowProps } from '@/types';
+import type { RoomShowProps } from '@/types';
 import { Head, router } from '@inertiajs/vue3';
-import { computed, ref, toRef } from 'vue';
+import { computed, ref, toRef, watch } from 'vue';
 
 const props = defineProps<RoomShowProps>();
 
-// Subscribe to real-time updates
-useRoomChannel({
-    room: toRef(() => props.room),
-});
-
-// Modal states
-const showExpenseModal = ref(false);
-const showAddParticipantModal = ref(false);
-const editingExpense = ref<Expense | null>(null);
+// Tab state
+const activeTab = ref<'expenses' | 'settlement' | 'profile'>('expenses');
 
 // Check if current user is admin
 const isAdmin = computed(() => props.currentParticipant.role === 'admin');
+const isLocked = computed(() => props.room.is_locked);
 
-// Check if user can edit a specific expense
-const canEditExpense = (expense: Expense) => {
-    return isAdmin.value || expense.payer_id === props.currentParticipant.id;
-};
-
-// Copy room link
-const copied = ref(false);
-const copyLink = async () => {
-    const url = window.location.href;
-    try {
-        await navigator.clipboard.writeText(url);
-        copied.value = true;
-        setTimeout(() => {
-            copied.value = false;
-        }, 2000);
-    } catch {
-        // Fallback for older browsers
-        const input = document.createElement('input');
-        input.value = url;
-        document.body.appendChild(input);
-        input.select();
-        document.execCommand('copy');
-        document.body.removeChild(input);
-        copied.value = true;
-        setTimeout(() => {
-            copied.value = false;
-        }, 2000);
-    }
-};
-
-// Handle expense added/updated
-const handleExpenseSuccess = () => {
-    showExpenseModal.value = false;
-    editingExpense.value = null;
-};
-
-// Handle edit expense
-const handleEditExpense = (expense: Expense) => {
-    editingExpense.value = expense;
-    showExpenseModal.value = true;
-};
-
-// Handle delete expense
-const handleDeleteExpense = (expense: Expense) => {
-    if (confirm(`¿Seguro que querés eliminar "${expense.description}"?`)) {
-        router.delete(`/${props.room.code}/expenses/${expense.id}`);
-    }
-};
-
-// Modal title
-const expenseModalTitle = computed(() => (editingExpense.value ? 'Editar gasto' : 'Nuevo gasto'));
-
-// Sorted expenses (newest first)
-const sortedExpenses = computed(() => {
-    return [...(props.room.expenses || [])].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+// Calculate total spent
+const totalSpent = computed(() => {
+    return props.room.expenses?.reduce((sum, e) => sum + Number(e.amount), 0) || 0;
 });
+
+const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('es-AR', {
+        style: 'currency',
+        currency: 'ARS',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
+    }).format(amount);
+};
+
+// Update dashboard when payments happen
+const paymentDashboard = ref<InstanceType<typeof PaymentDashboard> | null>(null);
+
+useRoomChannel({
+    room: toRef(() => props.room),
+    onSettlementPaid: () => {
+        if (activeTab.value === 'settlement') {
+            paymentDashboard.value?.fetchSettlements();
+        }
+    },
+    onRoomLocked: () => {
+        // If room gets locked, switch to settlement view to see results
+        activeTab.value = 'settlement';
+        router.reload({ only: ['room'] });
+    },
+});
+
+// Watch for locked state change initally
+watch(() => props.room.is_locked, (newVal) => {
+    if (newVal) activeTab.value = 'settlement';
+}, { immediate: true });
+
+// Lock room logic (admin)
+const lockingRoom = ref(false);
+const handleLockRoom = () => {
+    if (!isAdmin.value || isLocked.value) return;
+    if (confirm('¿Cerrar la sala y calcular deudas?')) {
+        lockingRoom.value = true;
+        router.post(`/${props.room.code}/lock`, {}, {
+            onFinish: () => {
+                lockingRoom.value = false;
+                activeTab.value = 'settlement';
+            },
+        });
+    }
+};
+
 </script>
 
 <template>
     <Head :title="`Sala ${room.code}`" />
 
-    <div class="safe-top flex min-h-dvh flex-col">
-        <!-- Header -->
-        <header class="glass-light sticky top-0 z-40 px-4 py-3">
-            <div class="mx-auto flex max-w-2xl items-center justify-between gap-3">
-                <!-- Room code -->
-                <button
-                    @click="copyLink"
-                    class="touch-target flex items-center gap-2 rounded-lg bg-white/5 px-3 py-1.5 transition-colors hover:bg-white/10"
+    <div class="min-h-dvh bg-[#090b10] flex justify-center text-white">
+        <!-- Desktop Sidebar (Visible lg+) -->
+        <aside class="hidden lg:flex fixed left-0 top-0 h-dvh w-64 flex-col border-r border-white/5 bg-[#0f111a] p-6">
+             <div class="mb-8 flex items-center gap-3">
+                <img src="/images/logo.png" alt="Cuanto Dolio" class="h-14 w-auto drop-shadow-lg" />
+             </div>
+
+             <nav class="flex-1 space-y-2">
+                <button 
+                    v-for="tab in ['expenses', 'settlement', 'profile'] as const"
+                    :key="tab"
+                    @click="activeTab = tab"
+                    :class="[
+                        'flex w-full items-center gap-3 rounded-xl px-4 py-3 transition-all',
+                        activeTab === tab ? 'bg-primary-500/10 text-primary-400 font-bold' : 'text-slate-400 hover:bg-white/5 hover:text-white'
+                    ]"
                 >
-                    <span class="font-mono font-bold tracking-wider text-primary-400">
-                        {{ room.code }}
+                    <span class="text-xl">
+                        {{ tab === 'expenses' ? '📝' : tab === 'settlement' ? '💸' : '👤' }}
                     </span>
-                    <svg
-                        :class="['h-4 w-4 transition-colors', copied ? 'text-secondary-400' : 'text-slate-400']"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                    >
-                        <path
-                            v-if="!copied"
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
-                        />
-                        <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                    </svg>
+                    <span class="capitalize">{{ tab === 'expenses' ? 'Gastos' : tab === 'settlement' ? 'Pagos' : 'Perfil' }}</span>
                 </button>
+             </nav>
 
-                <!-- Current user -->
-                <div class="flex items-center gap-2 text-sm text-slate-400">
-                    <span class="max-w-[100px] truncate">{{ currentParticipant.name }}</span>
-                    <span
-                        v-if="currentParticipant.role === 'admin'"
-                        class="rounded-full bg-primary-500/20 px-1.5 py-0.5 text-[10px] font-medium text-primary-400"
-                    >
-                        Admin
-                    </span>
-                </div>
-            </div>
-        </header>
+             <div class="mt-auto rounded-xl bg-slate-800/50 p-4 border border-white/5">
+                <p class="text-xs text-slate-400 uppercase tracking-widest font-bold mb-1">Total Gastado</p>
+                <p class="text-2xl font-bold text-white">{{ formatCurrency(totalSpent) }}</p>
+             </div>
+        </aside>
 
-        <!-- Main content -->
-        <main class="mx-auto w-full max-w-2xl flex-1 px-4 py-4 pb-24">
-            <!-- Participants -->
-            <section class="animate-fade-in mb-6">
-                <h2 class="mb-2 text-sm font-medium text-slate-400">Participantes</h2>
-                <ParticipantList
-                    :participants="room.participants || []"
-                    :current-participant-id="currentParticipant.id"
-                    :is-admin="isAdmin"
-                    @add-participant="showAddParticipantModal = true"
-                />
-            </section>
-
-            <!-- Balance summary -->
-            <section class="animate-slide-up mb-6">
-                <BalanceSummary :participants="room.participants || []" :expenses="room.expenses || []" />
-            </section>
-
-            <!-- Expenses -->
-            <section class="animate-slide-up delay-75">
-                <h2 class="mb-3 text-sm font-medium text-slate-400">
-                    Gastos
-                    <span v-if="room.expenses?.length" class="text-slate-500"> ({{ room.expenses.length }}) </span>
-                </h2>
-
-                <!-- Empty state -->
-                <Card v-if="!room.expenses?.length" padding="lg" class="text-center">
-                    <div class="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-primary-500/10">
-                        <svg class="h-7 w-7 text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                        </svg>
+        <!-- Main Content Area -->
+        <div class="w-full lg:pl-64 flex flex-col min-h-dvh transition-all duration-300">
+            
+            <!-- Mobile/Tablet Header (Hidden on LG) -->
+            <header class="sticky top-0 z-40 lg:hidden bg-[#0f111a]/95 px-5 py-4 backdrop-blur-md border-b border-white/5 supports-[backdrop-filter]:bg-[#0f111a]/80">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <img src="/images/logo.png" alt="Cuanto Dolio" class="h-10 w-auto drop-shadow-lg" />
                     </div>
-                    <p class="mb-1 text-slate-400">Sin gastos todavía</p>
-                    <p class="text-sm text-slate-500">Tocá el botón + para agregar uno</p>
-                </Card>
-
-                <!-- Expenses list -->
-                <div v-else class="space-y-3">
-                    <ExpenseCard
-                        v-for="expense in sortedExpenses"
-                        :key="expense.id"
-                        :expense="expense"
-                        :can-edit="canEditExpense(expense)"
-                        @edit="handleEditExpense"
-                        @delete="handleDeleteExpense"
-                    />
+                    
+                    <div v-if="isLocked" class="rounded-full bg-red-500/10 px-3 py-1 text-xs font-bold text-red-400 border border-red-500/20">
+                        Cerrada
+                    </div>
+                    <div v-else class="flex flex-col items-end">
+                        <span class="text-[10px] font-bold tracking-widest text-slate-500 uppercase">Total</span>
+                        <p class="text-lg font-bold text-white leading-none">{{ formatCurrency(totalSpent) }}</p>
+                    </div>
                 </div>
-            </section>
-        </main>
+            </header>
 
-        <!-- FAB - Add expense -->
-        <button
-            @click="showExpenseModal = true"
-            class="safe-bottom fixed right-6 bottom-6 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-lg shadow-primary-500/30 transition-transform active:scale-95"
-            aria-label="Agregar gasto"
-        >
-            <svg class="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-            </svg>
-        </button>
+            <!-- Desktop Top Bar (Room info + Lock button) -->
+            <header class="hidden lg:flex sticky top-0 z-40 bg-[#090b10]/95 backdrop-blur-md px-8 py-6 items-center justify-between border-b border-white/5">
+                <div>
+                    <h1 class="text-2xl font-bold text-white">Sala {{ room.code }}</h1>
+                    <p class="text-slate-400 text-sm">Gestioná los gastos de tu grupo</p>
+                </div>
 
-        <!-- Expense modal -->
-        <Modal v-model:open="showExpenseModal" :title="expenseModalTitle" @close="editingExpense = null">
-            <ExpenseForm
-                :room="room"
-                :participants="room.participants || []"
-                :current-participant="currentParticipant"
-                :expense="editingExpense || undefined"
-                @success="handleExpenseSuccess"
-            />
-        </Modal>
+                <div class="flex items-center gap-4">
+                    <div v-if="isLocked" class="flex items-center gap-2 rounded-full bg-red-500/10 px-4 py-2 text-sm font-bold text-red-400 border border-red-500/20">
+                        <span>🔒</span> Sala Cerrada
+                    </div>
+                    <button 
+                         v-else-if="isAdmin && room.expenses?.length && activeTab === 'settlement'"
+                         @click="handleLockRoom"
+                         class="rounded-xl bg-gradient-to-r from-secondary-500 to-secondary-600 px-6 py-2.5 font-bold text-white shadow-lg shadow-secondary-500/20 hover:scale-105 active:scale-95 transition-all"
+                    >
+                        🔒 Cerrar Sala y Calcular
+                    </button>
+                    <!-- Current User badge -->
+                    <div class="flex items-center gap-3 pl-6 border-l border-white/5">
+                         <div class="text-right">
+                            <p class="text-sm font-bold text-white">{{ currentParticipant.name }}</p>
+                            <p class="text-xs text-slate-500 capitalize">{{ currentParticipant.role === 'admin' ? 'Administrador' : 'Miembro' }}</p>
+                         </div>
+                         <div class="h-10 w-10 flex items-center justify-center rounded-full bg-gradient-to-br from-primary-500 to-purple-600 text-white font-bold shadow-lg">
+                            {{ currentParticipant.name.substring(0,2).toUpperCase() }}
+                         </div>
+                    </div>
+                </div>
+            </header>
 
-        <!-- Add participant modal (admin only) -->
-        <AddParticipantModal v-model:open="showAddParticipantModal" :room="room" />
+            <main class="flex-1 w-full max-w-5xl mx-auto px-4 lg:px-8 py-6 lg:py-10 pb-24 lg:pb-10 relative z-0">
+                <Transition
+                    enter-active-class="transition ease-out duration-200"
+                    enter-from-class="opacity-0 translate-y-2"
+                    enter-to-class="opacity-100 translate-y-0"
+                    leave-active-class="transition ease-in duration-150"
+                    leave-from-class="opacity-100 translate-y-0"
+                    leave-to-class="opacity-0 -translate-y-2"
+                    mode="out-in"
+                >
+                    <!-- Expenses Tab -->
+                    <ExpensesView 
+                        v-if="activeTab === 'expenses'" 
+                        :room="room" 
+                        :current-participant="currentParticipant"
+                        :is-admin="isAdmin"
+                        :is-locked="isLocked"
+                        class="mx-auto"
+                    />
+
+                    <!-- Settlement Tab -->
+                    <div v-else-if="activeTab === 'settlement'" class="max-w-3xl mx-auto">
+                        <div v-if="!isLocked" class="flex flex-col items-center justify-center py-20 text-center text-slate-400 border-2 border-dashed border-slate-800 rounded-3xl bg-white/5">
+                            <span class="text-6xl mb-6 bg-slate-800 rounded-full p-6 shadow-xl">🔒</span>
+                            <h3 class="text-2xl font-bold text-white mb-2">La sala está abierta</h3>
+                            <p class="text-slate-400 mb-8 max-w-md mx-auto">Cuando terminen de cargar todos los gastos, el administrador puede cerrar la sala para calcular automáticamente quién le debe a quién.</p>
+                            
+                            <button 
+                                v-if="isAdmin && room.expenses?.length"
+                                @click="handleLockRoom"
+                                class="hidden lg:block rounded-xl bg-gradient-to-r from-secondary-500 to-secondary-600 px-8 py-4 font-bold text-white shadow-xl shadow-secondary-500/20 hover:scale-105 active:scale-95 transition-all"
+                            >
+                                Cerrar Sala y Calcular
+                            </button>
+                             <button 
+                                v-if="isAdmin && room.expenses?.length"
+                                @click="handleLockRoom"
+                                class="lg:hidden rounded-xl bg-gradient-to-r from-secondary-500 to-secondary-600 px-6 py-3 font-bold text-white shadow-lg active:scale-95 transition-all"
+                            >
+                                Cerrar Sala
+                            </button>
+                        </div>
+                        <PaymentDashboard 
+                            v-else
+                            ref="paymentDashboard"
+                            :room-code="room.code" 
+                            :is-admin="isAdmin" 
+                        />
+                    </div>
+
+                    <!-- Profile Tab -->
+                    <ProfileView 
+                        v-else-if="activeTab === 'profile'"
+                        :room="room"
+                        :current-participant="currentParticipant"
+                        :is-admin="isAdmin"
+                        :is-locked="isLocked"
+                        class="max-w-xl mx-auto"
+                    />
+                </Transition>
+            </main>
+        </div>
+
+        <!-- Mobile Navigation -->
+        <BottomNav v-model="activeTab" class="lg:hidden" />
     </div>
 </template>

@@ -3,15 +3,17 @@
 namespace App\Models;
 
 use App\Enums\ParticipantRole;
+use Illuminate\Auth\Authenticatable;
+use Illuminate\Contracts\Auth\Authenticatable as AuthenticatableContract;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class Participant extends Model
+class Participant extends Model implements AuthenticatableContract
 {
-    use HasFactory, HasUuids;
+    use HasFactory, HasUuids, Authenticatable;
 
     /**
      * The attributes that are mass assignable.
@@ -23,6 +25,7 @@ class Participant extends Model
         'name',
         'session_token',
         'role',
+        'payment_alias',
     ];
 
     /**
@@ -84,5 +87,21 @@ class Participant extends Model
     public function isVirtual(): bool
     {
         return $this->role === ParticipantRole::Virtual;
+    }
+
+    /**
+     * Settlements where this participant owes money.
+     */
+    public function settlementsOwed(): HasMany
+    {
+        return $this->hasMany(Settlement::class, 'from_participant_id');
+    }
+
+    /**
+     * Settlements where this participant is owed money.
+     */
+    public function settlementsReceivable(): HasMany
+    {
+        return $this->hasMany(Settlement::class, 'to_participant_id');
     }
 }

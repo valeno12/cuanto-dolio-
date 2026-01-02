@@ -27,6 +27,7 @@ class ExpenseController extends Controller
             'payer_id' => $validated['payer_id'],
             'amount' => $validated['amount'],
             'description' => $validated['description'],
+            'category' => $validated['category'] ?? 'other',
         ]);
 
         // Create the splits
@@ -57,6 +58,7 @@ class ExpenseController extends Controller
             'payer_id' => $validated['payer_id'],
             'amount' => $validated['amount'],
             'description' => $validated['description'],
+            'category' => $validated['category'] ?? 'other',
         ]);
 
         // Delete old splits and create new ones
