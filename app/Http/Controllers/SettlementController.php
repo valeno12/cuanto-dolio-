@@ -147,7 +147,7 @@ class SettlementController extends Controller
     /**
      * Update current participant's payment alias.
      */
-    public function updateAlias(Request $request, Room $room): JsonResponse
+    public function updateAlias(Request $request, Room $room): \Illuminate\Http\RedirectResponse
     {
         $participant = $request->participant();
 
@@ -161,10 +161,9 @@ class SettlementController extends Controller
 
         $participant->update(['payment_alias' => $validated['payment_alias']]);
 
-        return response()->json([
-            'message' => 'Alias actualizado.',
-            'payment_alias' => $participant->payment_alias,
-        ]);
+        return redirect()
+            ->route('rooms.show', $room->code)
+            ->with('success', 'Alias actualizado.');
     }
 
     /**

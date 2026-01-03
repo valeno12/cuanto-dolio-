@@ -7,6 +7,7 @@ export interface Participant {
     room_id: string;
     name: string;
     role: ParticipantRole;
+    payment_alias?: string;
     created_at: string;
     updated_at: string;
 }
@@ -35,6 +36,7 @@ export interface Expense {
 export interface Room {
     id: string;
     code: string;
+    name?: string;
     is_locked: boolean;
     created_at: string;
     updated_at: string;
@@ -54,7 +56,7 @@ export interface RoomShowProps extends PageProps {
 }
 
 export interface RoomJoinProps extends PageProps {
-    room: Pick<Room, 'id' | 'code'>;
+    room: Pick<Room, 'id' | 'code' | 'name'>;
 }
 
 export interface RoomLockedProps extends PageProps {

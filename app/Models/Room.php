@@ -20,6 +20,7 @@ class Room extends Model
      */
     protected $fillable = [
         'code',
+        'name',
         'is_locked',
     ];
 

@@ -62,7 +62,8 @@ class ParticipantSessionService
     public function createParticipant(
         Room $room,
         string $name,
-        ParticipantRole $role = ParticipantRole::Member
+        ParticipantRole $role = ParticipantRole::Member,
+        ?string $paymentAlias = null
     ): Participant {
         $token = $role === ParticipantRole::Virtual ? null : $this->generateToken();
 
@@ -70,6 +71,7 @@ class ParticipantSessionService
             'name' => $name,
             'role' => $role,
             'session_token' => $token,
+            'payment_alias' => $paymentAlias,
         ]);
     }
 

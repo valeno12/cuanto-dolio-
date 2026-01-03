@@ -36,6 +36,7 @@ class JoinRoomRequest extends FormRequest
                 // Nickname must be unique within this room
                 Rule::unique('participants', 'name')->where('room_id', $room?->id),
             ],
+            'payment_alias' => ['nullable', 'string', 'max:100'],
         ];
     }
 

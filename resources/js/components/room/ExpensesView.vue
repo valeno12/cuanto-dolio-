@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import ExpenseCard from '@/components/room/ExpenseCard.vue';
+import ExpenseChart from '@/components/room/ExpenseChart.vue';
+import ExpenseDetailModal from '@/components/room/ExpenseDetailModal.vue';
 import ExpenseForm from '@/components/room/ExpenseForm.vue';
-import Card from '@/components/ui/Card.vue';
 import Modal from '@/components/ui/Modal.vue';
-import { useRoomChannel } from '@/composables/useRoomChannel';
 import type { Expense, Participant, Room } from '@/types';
 import { router } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
@@ -18,6 +18,8 @@ const props = defineProps<{
 // Modal states
 const showExpenseModal = ref(false);
 const editingExpense = ref<Expense | null>(null);
+const showDetailModal = ref(false);
+const selectedExpense = ref<Expense | null>(null);
 
 // Sorted expenses
 const sortedExpenses = computed(() => {
@@ -36,8 +38,14 @@ const handleExpenseSuccess = () => {
     editingExpense.value = null;
 };
 
+const handleSelectExpense = (expense: Expense) => {
+    selectedExpense.value = expense;
+    showDetailModal.value = true;
+};
+
 const handleEditExpense = (expense: Expense) => {
     if (props.isLocked) return;
+    showDetailModal.value = false;
     editingExpense.value = expense;
     showExpenseModal.value = true;
 };
@@ -55,16 +63,18 @@ const expenseModalTitle = computed(() => (editingExpense.value ? 'Editar gasto' 
 <template>
     <div class="space-y-4 pb-24">
         <!-- New Expense FAB -->
-        <!-- New Expense FAB (Mobile/Desktop) -->
         <button
             v-if="!isLocked"
             @click="showExpenseModal = true"
-            class="fixed right-4 bottom-20 lg:right-10 lg:bottom-10 z-30 flex h-14 w-14 lg:h-16 lg:w-16 items-center justify-center rounded-full bg-primary-500 text-white shadow-lg shadow-primary-500/30 transition-transform active:scale-95 hover:scale-105"
+            class="fixed right-4 bottom-20 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-primary-500 text-white shadow-lg shadow-primary-500/30 transition-transform hover:scale-105 active:scale-95 lg:right-10 lg:bottom-10 lg:h-16 lg:w-16"
         >
             <svg class="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
             </svg>
         </button>
+
+        <!-- Category Chart (Desktop only when there are expenses) -->
+        <ExpenseChart v-if="sortedExpenses.length > 0" :expenses="sortedExpenses" class="mb-6 hidden lg:block" />
 
         <!-- Expenses List -->
         <div v-if="sortedExpenses.length > 0" class="grid grid-cols-1 gap-3 lg:grid-cols-2 lg:gap-4 xl:grid-cols-3">
@@ -73,26 +83,27 @@ const expenseModalTitle = computed(() => (editingExpense.value ? 'Editar gasto' 
                 :key="expense.id"
                 :expense="expense"
                 :can-edit="canEditExpense(expense)"
+                @click="handleSelectExpense(expense)"
                 @edit="handleEditExpense"
                 @delete="handleDeleteExpense"
             />
         </div>
 
         <!-- Empty State -->
-        <div v-else class="flex flex-col items-center justify-center py-20 text-center animate-fade-in">
-             <div class="relative mb-6">
+        <div v-else class="animate-fade-in flex flex-col items-center justify-center py-20 text-center">
+            <div class="relative mb-6">
                 <div class="absolute -inset-4 rounded-full bg-primary-500/20 blur-xl"></div>
                 <div class="relative flex h-24 w-24 items-center justify-center rounded-3xl bg-slate-800 shadow-xl ring-1 ring-white/10">
                     <span class="text-5xl">👻</span>
                 </div>
-             </div>
-            <h3 class="text-xl font-bold text-white mb-2">¡Esto está muy tranquilo!</h3>
-            <p class="text-slate-400 max-w-[250px] mx-auto text-sm leading-relaxed">
-                Todavía no cargaron ningún gasto. Tocá el botón <span class="text-primary-400 font-bold">+</span> para empezar a dividir.
+            </div>
+            <h3 class="mb-2 text-xl font-bold text-white">¡Esto está muy tranquilo!</h3>
+            <p class="mx-auto max-w-[250px] text-sm leading-relaxed text-slate-400">
+                Todavía no cargaron ningún gasto. Tocá el botón <span class="font-bold text-primary-400">+</span> para empezar a dividir.
             </p>
         </div>
 
-        <!-- Expense Modal -->
+        <!-- Expense Form Modal -->
         <Modal v-model:open="showExpenseModal" :title="expenseModalTitle" @close="editingExpense = null">
             <ExpenseForm
                 :room="room"
@@ -102,5 +113,14 @@ const expenseModalTitle = computed(() => (editingExpense.value ? 'Editar gasto' 
                 @success="handleExpenseSuccess"
             />
         </Modal>
+
+        <!-- Expense Detail Modal -->
+        <ExpenseDetailModal
+            v-model:open="showDetailModal"
+            :expense="selectedExpense"
+            :can-edit="selectedExpense ? canEditExpense(selectedExpense) : false"
+            @edit="handleEditExpense"
+            @delete="handleDeleteExpense"
+        />
     </div>
 </template>

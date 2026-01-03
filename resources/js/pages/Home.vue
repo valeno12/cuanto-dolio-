@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import Button from '@/components/ui/Button.vue';
-import Card from '@/components/ui/Card.vue';
 import Input from '@/components/ui/Input.vue';
 import { Head, useForm } from '@inertiajs/vue3';
 
 const form = useForm({
     nickname: '',
+    room_name: '',
 });
 
 const submit = () => {
@@ -14,82 +14,136 @@ const submit = () => {
 </script>
 
 <template>
-    <Head title="Dividí gastos fácil" />
+    <Head title="Cuanto Dolió? - Dividí gastos fácil" />
 
-    <div class="safe-top safe-bottom flex min-h-dvh flex-col items-center justify-center px-4 py-12">
-        <!-- Hero section -->
-        <div class="animate-fade-in mb-10 text-center">
-            <!-- Logo / Icon -->
-            <div class="relative mb-6 inline-block">
-                <div
-                    class="animate-pulse-glow flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-primary-500 to-secondary-500"
-                >
-                    <svg class="h-10 w-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"
-                        />
-                    </svg>
-                </div>
-            </div>
-
-            <h1 class="mb-3 text-4xl font-bold tracking-tight sm:text-5xl">
-                <span class="text-gradient">CuantoDolio</span>
-            </h1>
-            <p class="mx-auto max-w-md text-lg text-slate-400">Dividí gastos con amigos sin complicaciones. Sin registro, sin login.</p>
+    <div class="min-h-screen overflow-hidden bg-[#080b12] text-white">
+        <!-- Background gradients -->
+        <div class="pointer-events-none fixed inset-0">
+            <div class="absolute -top-1/4 -left-1/4 h-[600px] w-[600px] rounded-full bg-violet-600/20 blur-[120px]"></div>
+            <div class="absolute -right-1/4 -bottom-1/4 h-[500px] w-[500px] rounded-full bg-blue-600/15 blur-[100px]"></div>
+            <div
+                class="absolute top-1/2 left-1/2 h-[300px] w-[300px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-fuchsia-500/10 blur-[80px]"
+            ></div>
         </div>
 
-        <!-- Create room form -->
-        <Card class="animate-slide-up w-full max-w-sm" variant="elevated">
-            <form @submit.prevent="submit" class="space-y-5">
-                <Input v-model="form.nickname" label="Tu nombre o apodo" :error="form.errors.nickname" autocomplete="name" autofocus />
+        <!-- Content -->
+        <div class="relative z-10 min-h-screen">
+            <!-- Desktop: Split Screen -->
+            <div class="hidden min-h-screen lg:flex">
+                <!-- Left: Hero (centered) -->
+                <div class="flex w-1/2 flex-col items-center justify-center px-8 xl:px-12">
+                    <div class="text-center">
+                        <!-- Logo -->
+                        <img src="/images/logo.png" alt="Cuanto Dolió?" class="mx-auto mb-8 h-48 w-auto drop-shadow-2xl xl:h-56 2xl:h-64" />
 
-                <Button type="submit" :loading="form.processing" :disabled="!form.nickname.trim()" full-width size="lg"> Crear Sala </Button>
-            </form>
+                        <!-- Título -->
+                        <h1 class="mb-3 text-4xl leading-tight font-bold xl:text-5xl">Dividí gastos sin dolor de cabeza.</h1>
 
-            <div class="mt-6 border-t border-white/10 pt-5">
-                <p class="text-center text-sm text-slate-400">¿Ya tenés un código de sala?</p>
-                <p class="mt-1 text-center text-sm text-slate-500">Pedile el link a quien la creó</p>
-            </div>
-        </Card>
+                        <!-- Subtítulo con acento -->
+                        <p class="text-2xl text-slate-400 xl:text-3xl">
+                            <span class="bg-gradient-to-r from-fuchsia-400 to-cyan-400 bg-clip-text font-medium text-transparent italic">
+                                (solo de billetera)
+                            </span>
+                        </p>
 
-        <!-- Features -->
-        <div class="animate-slide-up mt-16 grid w-full max-w-lg grid-cols-3 gap-6 delay-150">
-            <div class="text-center">
-                <div class="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-xl bg-primary-500/20">
-                    <svg class="h-6 w-6 text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                    </svg>
+                        <!-- Features subtle -->
+                        <div class="mt-8 flex justify-center gap-6 text-sm text-slate-500">
+                            <span>⚡ Sin registro</span>
+                            <span>🔒 Sin login</span>
+                            <span>✨ Gratis</span>
+                        </div>
+                    </div>
                 </div>
-                <p class="text-xs text-slate-400">Rápido</p>
+
+                <!-- Right: Form Card (centered) -->
+                <div class="flex w-1/2 items-center justify-center px-8 xl:px-12">
+                    <div class="w-full max-w-md">
+                        <!-- Glassmorphism Card -->
+                        <div class="rounded-3xl border border-white/10 bg-white/5 p-8 shadow-2xl backdrop-blur-xl">
+                            <form @submit.prevent="submit" class="space-y-5">
+                                <Input
+                                    v-model="form.room_name"
+                                    label="Nombre de la sala (opcional)"
+                                    placeholder="Ej: Viaje a Bariloche"
+                                    :error="form.errors.room_name"
+                                />
+
+                                <Input
+                                    v-model="form.nickname"
+                                    label="Tu nombre"
+                                    placeholder="Ej: Juan"
+                                    :error="form.errors.nickname"
+                                    autocomplete="name"
+                                    autofocus
+                                />
+
+                                <Button
+                                    type="submit"
+                                    :loading="form.processing"
+                                    :disabled="!form.nickname.trim()"
+                                    full-width
+                                    size="lg"
+                                    class="!bg-gradient-to-r !from-violet-600 !to-fuchsia-600 hover:!from-violet-500 hover:!to-fuchsia-500"
+                                >
+                                    Crear Sala
+                                </Button>
+                            </form>
+
+                            <div class="mt-6 border-t border-white/10 pt-5 text-center">
+                                <p class="text-sm text-slate-500">¿Tenés código? Pedile el link a quien creó la sala</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="text-center">
-                <div class="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-xl bg-secondary-500/20">
-                    <svg class="h-6 w-6 text-secondary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+
+            <!-- Mobile: Single Column -->
+            <div class="flex min-h-screen flex-col items-center justify-center px-6 py-12 lg:hidden">
+                <!-- Logo -->
+                <img src="/images/logo.png" alt="Cuanto Dolió?" class="mb-6 h-32 w-auto drop-shadow-xl sm:h-40" />
+
+                <!-- Title -->
+                <h1 class="mb-2 text-center text-2xl leading-tight font-bold sm:text-3xl">Dividí gastos sin dolor de cabeza.</h1>
+
+                <p class="mb-8 text-center text-lg">
+                    <span class="bg-gradient-to-r from-fuchsia-400 to-cyan-400 bg-clip-text text-transparent italic"> (solo de billetera) </span>
+                </p>
+
+                <!-- Form Card -->
+                <div class="w-full max-w-sm rounded-3xl border border-white/10 bg-white/5 p-6 backdrop-blur-xl">
+                    <form @submit.prevent="submit" class="space-y-4">
+                        <Input
+                            v-model="form.room_name"
+                            label="Nombre de la sala (opcional)"
+                            placeholder="Ej: Viaje a Bariloche"
+                            :error="form.errors.room_name"
                         />
-                    </svg>
-                </div>
-                <p class="text-xs text-slate-400">Sin login</p>
-            </div>
-            <div class="text-center">
-                <div class="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-xl bg-accent-500/20">
-                    <svg class="h-6 w-6 text-accent-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"
+
+                        <Input
+                            v-model="form.nickname"
+                            label="Tu nombre"
+                            placeholder="Ej: Juan"
+                            :error="form.errors.nickname"
+                            autocomplete="name"
+                            autofocus
                         />
-                    </svg>
+
+                        <Button
+                            type="submit"
+                            :loading="form.processing"
+                            :disabled="!form.nickname.trim()"
+                            full-width
+                            size="lg"
+                            class="!bg-gradient-to-r !from-violet-600 !to-fuchsia-600"
+                        >
+                            Crear Sala
+                        </Button>
+                    </form>
+
+                    <div class="mt-5 border-t border-white/10 pt-4 text-center">
+                        <p class="text-xs text-slate-500">¿Tenés código? Pedile el link a quien creó la sala</p>
+                    </div>
                 </div>
-                <p class="text-xs text-slate-400">Grupal</p>
             </div>
         </div>
     </div>

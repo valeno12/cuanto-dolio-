@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\ParticipantRole;
 use App\Events\ParticipantJoined;
 use App\Events\RoomLocked;
+use App\Events\RoomUnlocked;
 use App\Http\Requests\CreateRoomRequest;
 use App\Http\Requests\CreateVirtualParticipantRequest;
 use App\Http\Requests\JoinRoomRequest;
@@ -40,7 +41,10 @@ class RoomController extends Controller
         // Generate a unique 6-character code
         $code = $this->generateUniqueCode();
 
-        $room = Room::create(['code' => $code]);
+        $room = Room::create([
+            'code' => $code,
+            'name' => $request->validated('room_name'),
+        ]);
 
         // Create the admin participant
         $admin = $this->sessionService->createParticipant(
@@ -100,7 +104,7 @@ class RoomController extends Controller
         }
 
         return Inertia::render('Room/Join', [
-            'room' => $room->only(['id', 'code']),
+            'room' => $room->only(['id', 'code', 'name']),
         ]);
     }
 
@@ -112,7 +116,8 @@ class RoomController extends Controller
         $participant = $this->sessionService->createParticipant(
             room: $room,
             name: $request->validated('nickname'),
-            role: ParticipantRole::Member
+            role: ParticipantRole::Member,
+            paymentAlias: $request->validated('payment_alias')
         );
 
         // Broadcast to other participants in the room
@@ -200,5 +205,92 @@ class RoomController extends Controller
         return redirect()
             ->route('rooms.show', $room->code)
             ->with('success', 'Sala cerrada. ¡Ahora pueden ver quién le paga a quién!');
+    }
+
+    /**
+     * Unlock/reopen a room (admin only). Allows adding new expenses again.
+     */
+    public function unlock(Request $request, Room $room): RedirectResponse
+    {
+        $participant = $request->participant();
+
+        // Verify participant is admin of this room
+        if (!$participant || $participant->room_id !== $room->id) {
+            abort(403, 'No pertenecés a esta sala.');
+        }
+
+        if (!$participant->isAdmin()) {
+            abort(403, 'Solo el admin puede reabrir la sala.');
+        }
+
+        if (!$room->is_locked) {
+            return redirect()
+                ->route('rooms.show', $room->code)
+                ->with('info', 'La sala ya está abierta.');
+        }
+
+        // Delete existing settlements (they will be recalculated when locked again)
+        $room->settlements()->delete();
+
+        $room->update(['is_locked' => false]);
+
+        // Broadcast to all participants
+        broadcast(new RoomUnlocked($room))->toOthers();
+
+        return redirect()
+            ->route('rooms.show', $room->code)
+            ->with('success', 'Sala reabierta. Podés seguir agregando gastos.');
+    }
+
+    /**
+     * Delete a participant (admin only, cannot delete self or other admins).
+     */
+    public function destroyParticipant(Request $request, Room $room, \App\Models\Participant $participant): RedirectResponse
+    {
+        $currentParticipant = $request->participant();
+
+        // Verify current user is admin of this room
+        if (!$currentParticipant || $currentParticipant->room_id !== $room->id) {
+            abort(403, 'No pertenecés a esta sala.');
+        }
+
+        if (!$currentParticipant->isAdmin()) {
+            abort(403, 'Solo el admin puede eliminar participantes.');
+        }
+
+        if ($room->is_locked) {
+            abort(403, 'No se pueden eliminar participantes de una sala cerrada.');
+        }
+
+        // Cannot delete yourself
+        if ($participant->id === $currentParticipant->id) {
+            abort(403, 'No podés eliminarte a vos mismo.');
+        }
+
+        // Cannot delete another admin
+        if ($participant->isAdmin()) {
+            abort(403, 'No podés eliminar a otro admin.');
+        }
+
+        // Verify participant belongs to this room
+        if ($participant->room_id !== $room->id) {
+            abort(404, 'Participante no encontrado.');
+        }
+
+        // Delete associated expense splits first
+        $participant->splits()->delete();
+        
+        // Delete expenses where this participant was the payer
+        foreach ($participant->expenses as $expense) {
+            $expense->splits()->delete();
+            $expense->delete();
+        }
+
+        // Delete the participant
+        $participant->delete();
+
+        return redirect()
+            ->route('rooms.show', $room->code)
+            ->with('success', "Participante {$participant->name} eliminado.");
     }
 }

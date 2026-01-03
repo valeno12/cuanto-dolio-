@@ -6,12 +6,14 @@ interface Props {
     participants: Participant[];
     currentParticipantId?: string;
     isAdmin?: boolean;
+    isLocked?: boolean;
 }
 
 defineProps<Props>();
 
 const emit = defineEmits<{
     addParticipant: [];
+    selectParticipant: [participant: Participant];
 }>();
 
 const getRoleBadge = (role: Participant['role']) => {
@@ -28,11 +30,12 @@ const getRoleBadge = (role: Participant['role']) => {
 
 <template>
     <div class="no-scrollbar -mx-4 flex gap-3 overflow-x-auto px-4 pb-2">
-        <div
+        <button
             v-for="participant in participants"
             :key="participant.id"
+            @click="emit('selectParticipant', participant)"
             :class="[
-                'flex shrink-0 flex-col items-center gap-1 rounded-xl p-2 transition-colors',
+                'flex shrink-0 flex-col items-center gap-1 rounded-xl p-2 transition-all hover:bg-white/5 active:scale-95',
                 participant.id === currentParticipantId ? 'bg-primary-500/10' : '',
             ]"
         >
@@ -65,11 +68,11 @@ const getRoleBadge = (role: Participant['role']) => {
             >
                 {{ getRoleBadge(participant.role)?.text }}
             </span>
-        </div>
+        </button>
 
-        <!-- Add participant button (admin only) -->
+        <!-- Add participant button (admin only, when not locked) -->
         <button
-            v-if="isAdmin"
+            v-if="isAdmin && !isLocked"
             @click="emit('addParticipant')"
             class="touch-target flex shrink-0 flex-col items-center justify-center gap-1 rounded-xl p-2 transition-colors hover:bg-white/5"
         >

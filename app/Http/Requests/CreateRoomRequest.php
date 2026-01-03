@@ -23,6 +23,7 @@ class CreateRoomRequest extends FormRequest
     {
         return [
             'nickname' => ['required', 'string', 'max:50'],
+            'room_name' => ['nullable', 'string', 'max:100'],
         ];
     }
 
@@ -36,6 +37,7 @@ class CreateRoomRequest extends FormRequest
         return [
             'nickname.required' => 'Necesitás ingresar un nombre.',
             'nickname.max' => 'El nombre no puede tener más de 50 caracteres.',
+            'room_name.max' => 'El nombre de la sala no puede tener más de 100 caracteres.',
         ];
     }
 }
