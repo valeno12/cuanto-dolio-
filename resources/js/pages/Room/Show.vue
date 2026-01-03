@@ -238,7 +238,7 @@ const handleLockRoom = () => {
                                 Cerrar Sala
                             </button>
                         </div>
-                        <PaymentDashboard v-else ref="paymentDashboard" :room-code="room.code" :is-admin="isAdmin" />
+                        <PaymentDashboard v-else ref="paymentDashboard" :room-code="room.code" :is-admin="isAdmin" :is-locked="isLocked" />
                     </div>
 
                     <!-- Profile Tab -->

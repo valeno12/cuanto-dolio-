@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Room;
 use App\Services\ParticipantSessionService;
 use Closure;
 use Illuminate\Http\Request;
@@ -16,14 +17,25 @@ class ResolveParticipant
     /**
      * Handle an incoming request.
      *
-     * Resolves the participant from the session token and attaches it to the request.
+     * Resolves the participant from the session token for the specific room.
      * Does NOT block requests without a token - some routes are public.
      */
     public function handle(Request $request, Closure $next): Response
     {
-        $participant = $this->sessionService->resolveFromRequest($request);
+        $participant = null;
 
-        // Attach participant to request using a macro-like approach
+        // Try to get the room from route parameters
+        $roomCode = $request->route('room')?->code ?? $request->route('room');
+        
+        if ($roomCode) {
+            $room = $roomCode instanceof Room ? $roomCode : Room::where('code', $roomCode)->first();
+            
+            if ($room) {
+                $participant = $this->sessionService->resolveFromRequest($request, $room);
+            }
+        }
+
+        // Attach participant to request
         $request->attributes->set('participant', $participant);
 
         return $next($request);

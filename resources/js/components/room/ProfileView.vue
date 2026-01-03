@@ -4,9 +4,12 @@ import ParticipantList from '@/components/room/ParticipantList.vue';
 import ParticipantProfileModal from '@/components/room/ParticipantProfileModal.vue';
 import Avatar from '@/components/ui/Avatar.vue';
 import Card from '@/components/ui/Card.vue';
+import { useToast } from '@/composables/useToast';
 import { type Participant, type Room } from '@/types';
 import { router } from '@inertiajs/vue3';
 import { ref } from 'vue';
+
+const toast = useToast();
 
 const props = defineProps<{
     room: Room;
@@ -22,6 +25,11 @@ const editingAlias = ref(false);
 const aliasInput = ref(props.currentParticipant.payment_alias || '');
 const isSavingAlias = ref(false);
 
+// Room name editing
+const editingRoomName = ref(false);
+const roomNameInput = ref(props.room.name || '');
+const isSavingRoomName = ref(false);
+
 const saveAlias = () => {
     isSavingAlias.value = true;
     router.put(
@@ -31,9 +39,10 @@ const saveAlias = () => {
             preserveScroll: true,
             onSuccess: () => {
                 editingAlias.value = false;
+                toast.success('Alias guardado');
             },
             onError: () => {
-                alert('Error al guardar alias');
+                toast.error('Error al guardar alias');
             },
             onFinish: () => {
                 isSavingAlias.value = false;
@@ -42,9 +51,30 @@ const saveAlias = () => {
     );
 };
 
+const saveRoomName = () => {
+    isSavingRoomName.value = true;
+    router.put(
+        `/${props.room.code}/name`,
+        { name: roomNameInput.value || null },
+        {
+            preserveScroll: true,
+            onSuccess: () => {
+                editingRoomName.value = false;
+                toast.success('Nombre de sala actualizado');
+            },
+            onError: () => {
+                toast.error('Error al guardar nombre');
+            },
+            onFinish: () => {
+                isSavingRoomName.value = false;
+            },
+        },
+    );
+};
+
 const copyLink = async () => {
     await navigator.clipboard.writeText(window.location.href);
-    alert('Link copiado!');
+    toast.success('Link copiado');
 };
 
 const handleSelectParticipant = (participant: Participant) => {
@@ -92,7 +122,27 @@ const handleReopenRoom = () => {
         <section>
             <h3 class="mb-3 font-medium text-slate-400">Sala</h3>
             <Card>
-                <div class="mb-4 flex items-center justify-between">
+                <!-- Room Name (admin can edit) -->
+                <div v-if="isAdmin" class="mb-4">
+                    <div v-if="editingRoomName" class="flex gap-2">
+                        <input
+                            v-model="roomNameInput"
+                            placeholder="Nombre de la sala"
+                            class="w-full rounded-lg bg-slate-700 px-3 py-2 text-white focus:ring-1 focus:ring-primary-500"
+                        />
+                        <button @click="saveRoomName" :disabled="isSavingRoomName" class="px-2 text-primary-400">✓</button>
+                        <button @click="editingRoomName = false" class="px-2 text-slate-400">✕</button>
+                    </div>
+                    <div v-else class="flex cursor-pointer items-center gap-2" @click="editingRoomName = true">
+                        <p class="text-lg font-bold text-white">{{ room.name || 'Sin nombre' }}</p>
+                        <span class="text-xs text-slate-600">✎</span>
+                    </div>
+                </div>
+                <div v-else-if="room.name" class="mb-4">
+                    <p class="text-lg font-bold text-white">{{ room.name }}</p>
+                </div>
+
+                <div class="flex items-center justify-between">
                     <div>
                         <p class="text-xs text-slate-500">CÓDIGO</p>
                         <p class="font-mono text-2xl font-bold tracking-wider text-white">{{ room.code }}</p>

@@ -56,7 +56,7 @@ class RoomController extends Controller
         // Redirect to room with the session cookie
         return redirect()
             ->route('rooms.show', $room->code)
-            ->withCookie($this->sessionService->makeCookie($admin->session_token));
+            ->withCookie($this->sessionService->makeCookie($admin->session_token, $room->code));
     }
 
     /**
@@ -125,7 +125,7 @@ class RoomController extends Controller
 
         return redirect()
             ->route('rooms.show', $room->code)
-            ->withCookie($this->sessionService->makeCookie($participant->session_token));
+            ->withCookie($this->sessionService->makeCookie($participant->session_token, $room->code));
     }
 
     /**
@@ -243,6 +243,30 @@ class RoomController extends Controller
     }
 
     /**
+     * Update room name (admin only).
+     */
+    public function updateName(Request $request, Room $room): RedirectResponse
+    {
+        $participant = $request->participant();
+
+        if (!$participant || $participant->room_id !== $room->id) {
+            abort(403, 'No pertenecés a esta sala.');
+        }
+
+        if (!$participant->isAdmin()) {
+            abort(403, 'Solo el admin puede cambiar el nombre de la sala.');
+        }
+
+        $validated = $request->validate([
+            'name' => ['nullable', 'string', 'max:100'],
+        ]);
+
+        $room->update(['name' => $validated['name']]);
+
+        return redirect()->back();
+    }
+
+    /**
      * Delete a participant (admin only, cannot delete self or other admins).
      */
     public function destroyParticipant(Request $request, Room $room, \App\Models\Participant $participant): RedirectResponse
@@ -292,5 +316,69 @@ class RoomController extends Controller
         return redirect()
             ->route('rooms.show', $room->code)
             ->with('success', "Participante {$participant->name} eliminado.");
+    }
+
+    /**
+     * Export room summary as PDF.
+     */
+    public function exportPdf(Request $request, Room $room): \Illuminate\Http\Response
+    {
+        $participant = $request->participant();
+
+        // Verify participant belongs to this room
+        if (!$this->sessionService->participantBelongsToRoom($participant, $room)) {
+            abort(403, 'No pertenecés a esta sala.');
+        }
+
+        // Load relationships
+        $room->load(['participants', 'expenses.payer', 'expenses.splits']);
+
+        $totalExpenses = $room->expenses->sum('amount');
+
+        // Calculate categories breakdown
+        $categoryIcons = [
+            'food' => '🍔',
+            'drinks' => '🍺',
+            'transport' => '🚗',
+            'entertainment' => '🎉',
+            'shopping' => '🛍️',
+            'services' => '💼',
+            'other' => '📦',
+        ];
+        $categoryNames = [
+            'food' => 'Comida',
+            'drinks' => 'Bebidas',
+            'transport' => 'Transporte',
+            'entertainment' => 'Entretenimiento',
+            'shopping' => 'Compras',
+            'services' => 'Servicios',
+            'other' => 'Otros',
+        ];
+
+        $categoryTotals = $room->expenses->groupBy('category')->map(fn($expenses) => $expenses->sum('amount'));
+        
+        $categories = [];
+        foreach ($categoryTotals as $cat => $amount) {
+            $categories[] = [
+                'name' => $categoryNames[$cat] ?? 'Otros',
+                'icon' => $categoryIcons[$cat] ?? '📦',
+                'amount' => $amount,
+                'percent' => $totalExpenses > 0 ? round(($amount / $totalExpenses) * 100) : 0,
+            ];
+        }
+        
+        // Sort by amount descending and take top 4
+        usort($categories, fn($a, $b) => $b['amount'] - $a['amount']);
+        $categories = array_slice($categories, 0, 4);
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.room-summary', [
+            'room' => $room,
+            'totalExpenses' => $totalExpenses,
+            'categories' => $categories,
+        ]);
+
+        $filename = 'cuanto-dolio-' . $room->code . '-' . now()->format('Y-m-d') . '.pdf';
+
+        return $pdf->download($filename);
     }
 }

@@ -11,9 +11,10 @@ use Illuminate\Support\Str;
 class ParticipantSessionService
 {
     /**
-     * The cookie name for storing the participant token.
+     * The cookie name prefix for storing the participant token.
+     * Full cookie name will be: participant_token_{room_code}
      */
-    public const COOKIE_NAME = 'participant_token';
+    public const COOKIE_PREFIX = 'participant_token_';
 
     /**
      * The header name for the participant token (alternative to cookie).
@@ -34,26 +35,52 @@ class ParticipantSessionService
     }
 
     /**
-     * Resolve the participant from the request (cookie or header).
+     * Get the cookie name for a specific room.
      */
-    public function resolveFromRequest(Request $request): ?Participant
+    public function getCookieName(string $roomCode): string
     {
-        $token = $this->getTokenFromRequest($request);
-
-        if (!$token) {
-            return null;
-        }
-
-        return Participant::where('session_token', $token)->first();
+        return self::COOKIE_PREFIX . $roomCode;
     }
 
     /**
-     * Get the token from request (cookie first, then header).
+     * Resolve the participant from the request for a specific room.
      */
-    public function getTokenFromRequest(Request $request): ?string
+    public function resolveFromRequest(Request $request, ?Room $room = null): ?Participant
     {
-        return $request->cookie(self::COOKIE_NAME)
-            ?? $request->header(self::HEADER_NAME);
+        // If room is provided, look for room-specific cookie
+        if ($room) {
+            $token = $this->getTokenFromRequest($request, $room->code);
+            
+            if ($token) {
+                $participant = Participant::where('session_token', $token)
+                    ->where('room_id', $room->id)
+                    ->first();
+                
+                if ($participant) {
+                    return $participant;
+                }
+            }
+        }
+
+        // Fallback: try header
+        $headerToken = $request->header(self::HEADER_NAME);
+        if ($headerToken) {
+            return Participant::where('session_token', $headerToken)->first();
+        }
+
+        return null;
+    }
+
+    /**
+     * Get the token from request for a specific room.
+     */
+    public function getTokenFromRequest(Request $request, ?string $roomCode = null): ?string
+    {
+        if ($roomCode) {
+            return $request->cookie($this->getCookieName($roomCode));
+        }
+
+        return $request->header(self::HEADER_NAME);
     }
 
     /**
@@ -76,12 +103,12 @@ class ParticipantSessionService
     }
 
     /**
-     * Create a cookie response with the participant token.
+     * Create a cookie response with the participant token for a specific room.
      */
-    public function makeCookie(string $token): \Symfony\Component\HttpFoundation\Cookie
+    public function makeCookie(string $token, string $roomCode): \Symfony\Component\HttpFoundation\Cookie
     {
         return cookie(
-            name: self::COOKIE_NAME,
+            name: $this->getCookieName($roomCode),
             value: $token,
             minutes: self::COOKIE_LIFETIME,
             sameSite: 'lax'

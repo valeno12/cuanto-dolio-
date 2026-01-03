@@ -26,6 +26,8 @@ Route::get('/{room:code}/join', [RoomController::class, 'join'])->name('rooms.jo
 Route::post('/{room:code}/join', [RoomController::class, 'storeParticipant'])->name('rooms.join.store');
 Route::post('/{room:code}/lock', [RoomController::class, 'lock'])->name('rooms.lock');
 Route::post('/{room:code}/unlock', [RoomController::class, 'unlock'])->name('rooms.unlock');
+Route::put('/{room:code}/name', [RoomController::class, 'updateName'])->name('rooms.updateName');
+Route::get('/{room:code}/export-pdf', [RoomController::class, 'exportPdf'])->name('rooms.exportPdf');
 
 // Participants routes
 Route::post('/{room:code}/participants', [RoomController::class, 'storeVirtualParticipant'])->name('participants.store');

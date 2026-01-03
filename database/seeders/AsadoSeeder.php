@@ -14,10 +14,10 @@ class AsadoSeeder extends Seeder
     public function run(): void
     {
         // Find the room
-        $room = Room::where('code', 'MWEW4V')->first();
+        $room = Room::where('code', 'T3QCEQ')->first();
         
         if (!$room) {
-            $this->command->error('Room MWEW4V not found!');
+            $this->command->error('Room T3QCEQ not found!');
             return;
         }
 

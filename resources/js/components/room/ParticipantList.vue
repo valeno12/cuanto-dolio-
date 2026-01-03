@@ -29,13 +29,13 @@ const getRoleBadge = (role: Participant['role']) => {
 </script>
 
 <template>
-    <div class="no-scrollbar -mx-4 flex gap-3 overflow-x-auto px-4 pb-2">
+    <div class="grid grid-cols-4 gap-3 sm:grid-cols-5 md:grid-cols-6">
         <button
             v-for="participant in participants"
             :key="participant.id"
             @click="emit('selectParticipant', participant)"
             :class="[
-                'flex shrink-0 flex-col items-center gap-1 rounded-xl p-2 transition-all hover:bg-white/5 active:scale-95',
+                'flex flex-col items-center gap-1 rounded-xl p-2 transition-all hover:bg-white/5 active:scale-95',
                 participant.id === currentParticipantId ? 'bg-primary-500/10' : '',
             ]"
         >
@@ -74,7 +74,7 @@ const getRoleBadge = (role: Participant['role']) => {
         <button
             v-if="isAdmin && !isLocked"
             @click="emit('addParticipant')"
-            class="touch-target flex shrink-0 flex-col items-center justify-center gap-1 rounded-xl p-2 transition-colors hover:bg-white/5"
+            class="touch-target flex flex-col items-center justify-center gap-1 rounded-xl p-2 transition-colors hover:bg-white/5"
         >
             <div
                 class="flex h-14 w-14 items-center justify-center rounded-full border-2 border-dashed border-slate-600 text-slate-500 transition-colors hover:border-primary-500 hover:text-primary-400"

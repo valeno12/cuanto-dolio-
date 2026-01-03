@@ -3,6 +3,7 @@
 namespace App\Auth;
 
 use App\Models\Participant;
+use App\Models\Room;
 use App\Services\ParticipantSessionService;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Contracts\Auth\Guard;
@@ -40,7 +41,15 @@ class ParticipantGuard implements Guard
     public function user(): ?Authenticatable
     {
         if (!$this->resolved) {
-            $this->participant = $this->sessionService->resolveFromRequest($this->request);
+            // Try to get room from route
+            $roomCode = $this->request->route('room')?->code ?? $this->request->route('room');
+            $room = null;
+            
+            if ($roomCode) {
+                $room = $roomCode instanceof Room ? $roomCode : Room::where('code', $roomCode)->first();
+            }
+            
+            $this->participant = $this->sessionService->resolveFromRequest($this->request, $room);
             $this->resolved = true;
         }
 
