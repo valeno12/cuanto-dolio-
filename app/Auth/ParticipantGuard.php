@@ -49,6 +49,15 @@ class ParticipantGuard implements Guard
                 $room = $roomCode instanceof Room ? $roomCode : Room::where('code', $roomCode)->first();
             }
             
+            // Fallback: extract room from broadcasting channel_name (for /broadcasting/auth)
+            // The channel_name comes as "private-room.{roomId}" in the POST body
+            if (!$room && $this->request->has('channel_name')) {
+                $channelName = $this->request->input('channel_name');
+                if (preg_match('/^(?:private-|presence-)?room\.(.+)$/', $channelName, $matches)) {
+                    $room = Room::find($matches[1]);
+                }
+            }
+            
             $this->participant = $this->sessionService->resolveFromRequest($this->request, $room);
             $this->resolved = true;
         }
