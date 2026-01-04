@@ -3,10 +3,11 @@ import BottomNav from '@/components/room/BottomNav.vue';
 import ExpensesView from '@/components/room/ExpensesView.vue';
 import PaymentDashboard from '@/components/room/PaymentDashboard.vue';
 import ProfileView from '@/components/room/ProfileView.vue';
+import WelcomeModal from '@/components/room/WelcomeModal.vue';
 import { useRoomChannel } from '@/composables/useRoomChannel';
 import type { RoomShowProps } from '@/types';
 import { Head, router } from '@inertiajs/vue3';
-import { computed, ref, toRef, watch } from 'vue';
+import { computed, onMounted, ref, toRef, watch } from 'vue';
 
 const props = defineProps<RoomShowProps>();
 
@@ -81,6 +82,16 @@ const handleLockRoom = () => {
         );
     }
 };
+
+// Welcome modal for new rooms (admin with no expenses and 1 participant)
+const showWelcomeModal = ref(false);
+
+onMounted(() => {
+    // Show welcome modal if: admin, no expenses, only 1 participant (just created)
+    if (isAdmin.value && !isLocked.value && (props.room.expenses?.length || 0) === 0 && (props.room.participants?.length || 0) === 1) {
+        showWelcomeModal.value = true;
+    }
+});
 </script>
 
 <template>
@@ -256,5 +267,8 @@ const handleLockRoom = () => {
 
         <!-- Mobile Navigation -->
         <BottomNav v-model="activeTab" class="lg:hidden" />
+
+        <!-- Welcome Modal for new rooms -->
+        <WelcomeModal v-model:open="showWelcomeModal" :room="room" />
     </div>
 </template>

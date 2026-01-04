@@ -22,9 +22,9 @@ class ParticipantSessionService
     public const HEADER_NAME = 'X-Participant-Token';
 
     /**
-     * Cookie lifetime in minutes (30 days).
+     * Cookie lifetime in minutes (60 days).
      */
-    public const COOKIE_LIFETIME = 60 * 24 * 30;
+    public const COOKIE_LIFETIME = 60 * 24 * 60;
 
     /**
      * Generate a new unique session token.

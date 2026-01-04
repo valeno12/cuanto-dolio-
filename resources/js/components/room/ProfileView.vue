@@ -7,7 +7,7 @@ import Card from '@/components/ui/Card.vue';
 import { useToast } from '@/composables/useToast';
 import { type Participant, type Room } from '@/types';
 import { router } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 
 const toast = useToast();
 
@@ -29,6 +29,16 @@ const isSavingAlias = ref(false);
 const editingRoomName = ref(false);
 const roomNameInput = ref(props.room.name || '');
 const isSavingRoomName = ref(false);
+
+// Days remaining until room expires
+const daysRemaining = computed(() => {
+    if (!props.room.expires_at) return null;
+    const expiresAt = new Date(props.room.expires_at);
+    const now = new Date();
+    const diffTime = expiresAt.getTime() - now.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays > 0 ? diffDays : 0;
+});
 
 const saveAlias = () => {
     isSavingAlias.value = true;
@@ -160,6 +170,15 @@ const handleReopenRoom = () => {
                             📲 Compartir
                         </button>
                     </div>
+                </div>
+
+                <!-- Days remaining -->
+                <div v-if="daysRemaining !== null" class="mt-4 flex items-center justify-center gap-2 text-sm text-slate-400">
+                    <span>⏱️</span>
+                    <span v-if="daysRemaining > 7">{{ daysRemaining }} días restantes</span>
+                    <span v-else-if="daysRemaining > 1" class="text-yellow-400">⚠️ {{ daysRemaining }} días restantes</span>
+                    <span v-else-if="daysRemaining === 1" class="text-orange-400">⚠️ ¡Último día!</span>
+                    <span v-else class="text-red-400">⚠️ Sala vencida</span>
                 </div>
 
                 <div v-if="isLocked" class="mt-4 rounded-lg bg-red-500/20 p-3 text-center">

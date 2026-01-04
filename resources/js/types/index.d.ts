@@ -38,6 +38,7 @@ export interface Room {
     code: string;
     name?: string;
     is_locked: boolean;
+    expires_at?: string;
     created_at: string;
     updated_at: string;
     participants?: Participant[];
