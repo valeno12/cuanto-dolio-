@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ExpenseController;
+use App\Http\Controllers\MyRoomsController;
 use App\Http\Controllers\RoomController;
 use App\Http\Controllers\SettlementController;
 use Illuminate\Support\Facades\Broadcast;
@@ -19,6 +20,10 @@ Broadcast::routes(['middleware' => ['web']]);
 // Landing / Create Room
 Route::get('/', [RoomController::class, 'create'])->name('home');
 Route::post('/rooms', [RoomController::class, 'store'])->name('rooms.store');
+
+// My Rooms (get user's active rooms from cookies)
+Route::get('/my-rooms', [MyRoomsController::class, 'index'])->name('my-rooms');
+
 
 // Room routes (using code as the identifier)
 Route::get('/{room:code}', [RoomController::class, 'show'])->name('rooms.show');

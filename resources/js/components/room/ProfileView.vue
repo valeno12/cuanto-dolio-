@@ -77,6 +77,13 @@ const copyLink = async () => {
     toast.success('Link copiado');
 };
 
+const shareRoom = () => {
+    const roomName = props.room.name || `Sala ${props.room.code}`;
+    const message = `¡Te invito a "${roomName}" en Cuanto Dolió! 💸\n\nDividimos gastos fácil, sin registro ni login.\n\nÚnite acá: ${window.location.href}`;
+    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+    window.open(whatsappUrl, '_blank');
+};
+
 const handleSelectParticipant = (participant: Participant) => {
     selectedParticipant.value = participant;
     showParticipantProfile.value = true;
@@ -147,7 +154,12 @@ const handleReopenRoom = () => {
                         <p class="text-xs text-slate-500">CÓDIGO</p>
                         <p class="font-mono text-2xl font-bold tracking-wider text-white">{{ room.code }}</p>
                     </div>
-                    <button @click="copyLink" class="rounded-lg bg-white/10 px-3 py-2 text-sm text-white hover:bg-white/20">Copiar Link</button>
+                    <div class="flex gap-2">
+                        <button @click="copyLink" class="rounded-lg bg-white/10 px-3 py-2 text-sm text-white hover:bg-white/20">📋 Copiar</button>
+                        <button @click="shareRoom" class="rounded-lg bg-green-600/80 px-3 py-2 text-sm text-white hover:bg-green-600">
+                            📲 Compartir
+                        </button>
+                    </div>
                 </div>
 
                 <div v-if="isLocked" class="mt-4 rounded-lg bg-red-500/20 p-3 text-center">

@@ -7,11 +7,18 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Builder;
 use App\Enums\ParticipantRole;
+use Carbon\Carbon;
 
 class Room extends Model
 {
     use HasFactory, HasUuids;
+
+    /**
+     * Room expiration in days.
+     */
+    public const EXPIRATION_DAYS = 60;
 
     /**
      * The attributes that are mass assignable.
@@ -22,6 +29,7 @@ class Room extends Model
         'code',
         'name',
         'is_locked',
+        'expires_at',
     ];
 
     /**
@@ -33,7 +41,50 @@ class Room extends Model
     {
         return [
             'is_locked' => 'boolean',
+            'expires_at' => 'datetime',
         ];
+    }
+
+    /**
+     * Boot the model.
+     */
+    protected static function boot(): void
+    {
+        parent::boot();
+
+        static::creating(function (Room $room) {
+            if (!$room->expires_at) {
+                $room->expires_at = Carbon::now()->addDays(self::EXPIRATION_DAYS);
+            }
+        });
+    }
+
+    /**
+     * Check if the room has expired.
+     */
+    public function isExpired(): bool
+    {
+        return $this->expires_at && $this->expires_at->isPast();
+    }
+
+    /**
+     * Scope to get only active (non-expired) rooms.
+     */
+    public function scopeActive(Builder $query): Builder
+    {
+        return $query->where(function ($q) {
+            $q->whereNull('expires_at')
+              ->orWhere('expires_at', '>', now());
+        });
+    }
+
+    /**
+     * Scope to get only expired rooms.
+     */
+    public function scopeExpired(Builder $query): Builder
+    {
+        return $query->whereNotNull('expires_at')
+                     ->where('expires_at', '<=', now());
     }
 
     /**
@@ -68,4 +119,3 @@ class Room extends Model
         return $this->hasMany(Settlement::class);
     }
 }
-

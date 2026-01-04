@@ -1,16 +1,51 @@
 <script setup lang="ts">
 import Button from '@/components/ui/Button.vue';
 import Input from '@/components/ui/Input.vue';
-import { Head, useForm } from '@inertiajs/vue3';
+import { Head, router, useForm } from '@inertiajs/vue3';
+import { onMounted, ref } from 'vue';
+
+interface MyRoom {
+    id: string;
+    code: string;
+    name: string | null;
+    is_locked: boolean;
+    participant_count: number;
+    expense_count: number;
+    my_name: string;
+    my_role: string;
+}
 
 const form = useForm({
     nickname: '',
     room_name: '',
 });
 
+const myRooms = ref<MyRoom[]>([]);
+const loadingRooms = ref(true);
+
 const submit = () => {
     form.post('/rooms');
 };
+
+const fetchMyRooms = async () => {
+    try {
+        const response = await fetch('/my-rooms');
+        const data = await response.json();
+        myRooms.value = data.rooms;
+    } catch {
+        // Silently fail - rooms section just won't show
+    } finally {
+        loadingRooms.value = false;
+    }
+};
+
+const goToRoom = (code: string) => {
+    router.visit(`/${code}`);
+};
+
+onMounted(() => {
+    fetchMyRooms();
+});
 </script>
 
 <template>
@@ -55,8 +90,8 @@ const submit = () => {
                     </div>
                 </div>
 
-                <!-- Right: Form Card (centered) -->
-                <div class="flex w-1/2 items-center justify-center px-8 xl:px-12">
+                <!-- Right: Form Card + My Rooms -->
+                <div class="flex w-1/2 flex-col items-center justify-center gap-8 px-8 py-12 xl:px-12">
                     <div class="w-full max-w-md">
                         <!-- Glassmorphism Card -->
                         <div class="rounded-3xl border border-white/10 bg-white/5 p-8 shadow-2xl backdrop-blur-xl">
@@ -92,6 +127,35 @@ const submit = () => {
                             <div class="mt-6 border-t border-white/10 pt-5 text-center">
                                 <p class="text-sm text-slate-500">¿Tenés código? Pedile el link a quien creó la sala</p>
                             </div>
+                        </div>
+                    </div>
+
+                    <!-- My Rooms Section (Desktop) -->
+                    <div v-if="myRooms.length > 0" class="w-full max-w-md">
+                        <h2 class="mb-3 text-sm font-bold tracking-widest text-slate-400 uppercase">Mis Salas</h2>
+                        <div class="space-y-2">
+                            <button
+                                v-for="room in myRooms"
+                                :key="room.id"
+                                @click="goToRoom(room.code)"
+                                class="flex w-full items-center justify-between rounded-2xl border border-white/10 bg-white/5 p-4 text-left transition-all hover:border-violet-500/30 hover:bg-white/10"
+                            >
+                                <div class="min-w-0 flex-1">
+                                    <p class="truncate font-bold text-white">{{ room.name || `Sala ${room.code}` }}</p>
+                                    <p class="text-xs text-slate-400">
+                                        👤 {{ room.my_name }} · 👥 {{ room.participant_count }} · 📝 {{ room.expense_count }} gastos
+                                    </p>
+                                </div>
+                                <div class="ml-3 flex items-center gap-2">
+                                    <span v-if="room.is_locked" class="rounded-full bg-green-500/10 px-2 py-0.5 text-xs font-medium text-green-400">
+                                        Cerrada
+                                    </span>
+                                    <span v-else class="rounded-full bg-violet-500/10 px-2 py-0.5 text-xs font-medium text-violet-400">
+                                        Abierta
+                                    </span>
+                                    <span class="text-slate-500">→</span>
+                                </div>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -142,6 +206,31 @@ const submit = () => {
 
                     <div class="mt-5 border-t border-white/10 pt-4 text-center">
                         <p class="text-xs text-slate-500">¿Tenés código? Pedile el link a quien creó la sala</p>
+                    </div>
+                </div>
+
+                <!-- My Rooms Section (Mobile) -->
+                <div v-if="myRooms.length > 0" class="mt-8 w-full max-w-sm">
+                    <h2 class="mb-3 text-center text-sm font-bold tracking-widest text-slate-400 uppercase">Mis Salas</h2>
+                    <div class="space-y-2">
+                        <button
+                            v-for="room in myRooms"
+                            :key="room.id"
+                            @click="goToRoom(room.code)"
+                            class="flex w-full items-center justify-between rounded-2xl border border-white/10 bg-white/5 p-4 text-left transition-all active:scale-[0.98]"
+                        >
+                            <div class="min-w-0 flex-1">
+                                <p class="truncate font-bold text-white">{{ room.name || `Sala ${room.code}` }}</p>
+                                <p class="text-xs text-slate-400">👤 {{ room.my_name }} · 👥 {{ room.participant_count }}</p>
+                            </div>
+                            <div class="ml-3 flex items-center gap-2">
+                                <span v-if="room.is_locked" class="rounded-full bg-green-500/10 px-2 py-0.5 text-xs font-medium text-green-400">
+                                    Cerrada
+                                </span>
+                                <span v-else class="rounded-full bg-violet-500/10 px-2 py-0.5 text-xs font-medium text-violet-400"> Abierta </span>
+                                <span class="text-slate-500">→</span>
+                            </div>
+                        </button>
                     </div>
                 </div>
             </div>
