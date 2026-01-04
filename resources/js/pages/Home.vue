@@ -100,7 +100,7 @@ const submit = () => {
             <!-- Mobile: Single Column -->
             <div class="flex min-h-screen flex-col items-center justify-center px-6 py-12 lg:hidden">
                 <!-- Logo -->
-                <img src="/images/logo.png" alt="Cuanto Dolió?" class="mb-6 h-32 w-auto drop-shadow-xl sm:h-40" />
+                <img src="/images/logo.png" alt="Cuanto Dolió?" class="mb-6 h-40 w-auto drop-shadow-xl sm:h-48" />
 
                 <!-- Title -->
                 <h1 class="mb-2 text-center text-2xl leading-tight font-bold sm:text-3xl">Dividí gastos sin dolor de cabeza.</h1>
