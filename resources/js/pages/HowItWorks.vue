@@ -119,6 +119,47 @@ const steps = [
         icon: '💰',
     },
     {
+        title: 'División personalizada 🎯',
+        subtitle: 'Dividí solo entre quienes corresponde',
+        content: `
+            <p class="mb-4">No todos los gastos son de todos. <strong>Podés elegir exactamente quiénes participan</strong> de cada gasto.</p>
+            
+            <div class="bg-slate-800/50 rounded-xl p-4 border border-slate-700 mb-4">
+                <div class="flex items-center gap-3 mb-3">
+                    <span class="text-2xl">🍹</span>
+                    <div>
+                        <p class="font-medium">Fernet + Coca</p>
+                        <p class="text-xs text-slate-400">María pagó $8.000</p>
+                    </div>
+                </div>
+                <p class="text-xs text-slate-400 mb-3">¿Entre quiénes se divide?</p>
+                <div class="grid grid-cols-2 gap-2">
+                    <div class="flex items-center gap-2 p-2 bg-green-500/20 rounded-lg border border-green-500/30">
+                        <span class="text-green-400">✓</span>
+                        <span class="text-sm">Juan</span>
+                    </div>
+                    <div class="flex items-center gap-2 p-2 bg-green-500/20 rounded-lg border border-green-500/30">
+                        <span class="text-green-400">✓</span>
+                        <span class="text-sm">María</span>
+                    </div>
+                    <div class="flex items-center gap-2 p-2 bg-slate-700/50 rounded-lg border border-slate-600">
+                        <span class="text-slate-500">✗</span>
+                        <span class="text-sm text-slate-400">Pedro</span>
+                    </div>
+                    <div class="flex items-center gap-2 p-2 bg-green-500/20 rounded-lg border border-green-500/30">
+                        <span class="text-green-400">✓</span>
+                        <span class="text-sm">Ana</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="p-3 bg-fuchsia-500/10 rounded-xl border border-fuchsia-500/20">
+                <p class="text-sm text-fuchsia-300">🎯 Pedro no tomó fernet, así que <strong>no participa</strong> de ese gasto. Solo pagan Juan, María y Ana.</p>
+            </div>
+        `,
+        icon: '🎯',
+    },
+    {
         title: 'Paso 4: Cerrá la sala',
         subtitle: 'Cuando terminen de cargar gastos',
         content: `
