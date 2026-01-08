@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import Button from '@/components/ui/Button.vue';
 import Input from '@/components/ui/Input.vue';
-import { Head, router, useForm } from '@inertiajs/vue3';
+import { Head, Link, router, useForm } from '@inertiajs/vue3';
 import { onMounted, ref } from 'vue';
 
 interface MyRoom {
@@ -124,8 +124,12 @@ onMounted(() => {
                                 </Button>
                             </form>
 
-                            <div class="mt-6 border-t border-white/10 pt-5 text-center">
+                            <div class="mt-6 border-t border-white/10 pt-5 text-center space-y-3">
                                 <p class="text-sm text-slate-500">¿Tenés código? Pedile el link a quien creó la sala</p>
+                                <Link href="/como-funciona" class="inline-flex items-center gap-2 text-sm text-violet-400 hover:text-violet-300 transition-colors">
+                                    <span>❓</span>
+                                    <span>¿Cómo funciona?</span>
+                                </Link>
                             </div>
                         </div>
                     </div>
@@ -204,8 +208,12 @@ onMounted(() => {
                         </Button>
                     </form>
 
-                    <div class="mt-5 border-t border-white/10 pt-4 text-center">
+                    <div class="mt-5 border-t border-white/10 pt-4 text-center space-y-2">
                         <p class="text-xs text-slate-500">¿Tenés código? Pedile el link a quien creó la sala</p>
+                        <Link href="/como-funciona" class="inline-flex items-center gap-2 text-xs text-violet-400">
+                            <span>❓</span>
+                            <span>¿Cómo funciona?</span>
+                        </Link>
                     </div>
                 </div>
 

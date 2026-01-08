@@ -6,7 +6,7 @@ import ProfileView from '@/components/room/ProfileView.vue';
 import WelcomeModal from '@/components/room/WelcomeModal.vue';
 import { useRoomChannel } from '@/composables/useRoomChannel';
 import type { RoomShowProps } from '@/types';
-import { Head, router } from '@inertiajs/vue3';
+import { Head, Link, router } from '@inertiajs/vue3';
 import { computed, onMounted, ref, toRef, watch } from 'vue';
 
 const props = defineProps<RoomShowProps>();
@@ -119,6 +119,15 @@ onMounted(() => {
                     </span>
                     <span class="capitalize">{{ tab === 'expenses' ? 'Gastos' : tab === 'settlement' ? 'Pagos' : 'Perfil' }}</span>
                 </button>
+                
+                <!-- How it works link -->
+                <Link 
+                    href="/como-funciona"
+                    class="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-slate-500 transition-all hover:bg-white/5 hover:text-slate-300"
+                >
+                    <span class="text-xl">❓</span>
+                    <span>¿Cómo funciona?</span>
+                </Link>
             </nav>
 
             <div class="mt-auto rounded-xl border border-white/5 bg-slate-800/50 p-4">
@@ -145,12 +154,22 @@ onMounted(() => {
                         </div>
                     </div>
 
-                    <div v-if="isLocked" class="rounded-full border border-red-500/20 bg-red-500/10 px-3 py-1 text-xs font-bold text-red-400">
-                        Cerrada
-                    </div>
-                    <div v-else class="flex flex-col items-end">
-                        <span class="text-[10px] font-bold tracking-widest text-slate-500 uppercase">Total</span>
-                        <p class="text-lg leading-none font-bold text-white">{{ formatCurrency(totalSpent) }}</p>
+                    <div class="flex items-center gap-3">
+                        <!-- Help button -->
+                        <Link 
+                            href="/como-funciona"
+                            class="flex h-9 w-9 items-center justify-center rounded-full bg-white/5 text-lg hover:bg-white/10"
+                        >
+                            ❓
+                        </Link>
+                        
+                        <div v-if="isLocked" class="rounded-full border border-red-500/20 bg-red-500/10 px-3 py-1 text-xs font-bold text-red-400">
+                            Cerrada
+                        </div>
+                        <div v-else class="flex flex-col items-end">
+                            <span class="text-[10px] font-bold tracking-widest text-slate-500 uppercase">Total</span>
+                            <p class="text-lg leading-none font-bold text-white">{{ formatCurrency(totalSpent) }}</p>
+                        </div>
                     </div>
                 </div>
             </header>

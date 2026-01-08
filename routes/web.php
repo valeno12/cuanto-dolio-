@@ -24,6 +24,9 @@ Route::post('/rooms', [RoomController::class, 'store'])->name('rooms.store');
 // My Rooms (get user's active rooms from cookies)
 Route::get('/my-rooms', [MyRoomsController::class, 'index'])->name('my-rooms');
 
+// How it works page
+Route::get('/como-funciona', fn() => \Inertia\Inertia::render('HowItWorks'))->name('how-it-works');
+
 
 // Room routes (using code as the identifier)
 Route::get('/{room:code}', [RoomController::class, 'show'])->name('rooms.show');
