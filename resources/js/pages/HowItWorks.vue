@@ -193,17 +193,19 @@ const steps = [
                 <div class="p-4 bg-red-500/10 rounded-xl border border-red-500/20">
                     <p class="text-xs text-red-400 mb-2 font-bold">❌ SIN SIMPLIFICAR</p>
                     <div class="space-y-1 text-sm text-slate-400">
-                        <p>Juan → María: $2.000</p>
-                        <p>María → Pedro: $3.500</p>
-                        <p>Pedro → Juan: $1.500</p>
-                        <p>Ana → Juan: $4.000</p>
+                        <p>Facu → Leo: $2.000</p>
+                        <p>Leo → Sofi: $2.000</p>
+                        <p>Facu → Nico: $1.500</p>
+                        <p>Nico → Sofi: $1.500</p>
+                        <p>Facu → Sofi: $1.000</p>
                     </div>
-                    <p class="mt-3 text-red-400 font-bold text-lg">4 transferencias 😵</p>
+                    <p class="mt-3 text-red-400 font-bold text-lg">5 transferencias 😵</p>
                 </div>
                 <div class="p-4 bg-green-500/10 rounded-xl border border-green-500/20">
                     <p class="text-xs text-green-400 mb-2 font-bold">✅ SIMPLIFICADO</p>
                     <div class="space-y-1 text-sm text-slate-400">
-                        <p>Ana → Juan: $4.500</p>
+                        <p>Facu → Sofi: $4.500</p>
+                        <p class="opacity-0">-</p>
                         <p class="opacity-0">-</p>
                         <p class="opacity-0">-</p>
                         <p class="opacity-0">-</p>
@@ -211,7 +213,7 @@ const steps = [
                     <p class="mt-3 text-green-400 font-bold text-lg">¡Solo 1! 🎉</p>
                 </div>
             </div>
-            <p class="mt-4 text-center text-sm text-slate-400">El sistema calcula automáticamente el balance neto de cada persona</p>
+            <p class="mt-4 text-center text-sm text-slate-400">El sistema calcula automáticamente quién le paga a quién</p>
         `,
         icon: '🧮',
     },
