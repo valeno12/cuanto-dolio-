@@ -34,12 +34,12 @@ const steps = [
             <p class="mb-4">Una <strong>sala</strong> es donde vos y tu grupo van a cargar todos los gastos. Cada sala tiene un código único que podés compartir.</p>
             <div class="bg-slate-800/50 rounded-xl p-4 border border-slate-700 mt-4">
                 <p class="text-sm text-slate-400 mb-2">💡 Consejo</p>
-                <p class="text-sm">Ponele un nombre descriptivo como "Viaje a Bariloche" o "Gastos febrero" para identificarla fácil.</p>
+                <p class="text-sm">Ponele un nombre descriptivo como "Viaje a Bariloche" o "Asado Trabajo" para identificarla fácil.</p>
             </div>
             <div class="mt-6 flex items-center justify-center gap-6">
                 <div class="text-center">
                     <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center text-3xl mb-2">📝</div>
-                    <p class="text-xs text-slate-400">Nombre + Tu nombre</p>
+                    <p class="text-xs text-slate-400">Nombre de sala + Tu nombre</p>
                 </div>
                 <span class="text-3xl text-slate-600">→</span>
                 <div class="text-center">
