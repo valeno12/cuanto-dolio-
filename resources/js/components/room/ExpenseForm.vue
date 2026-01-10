@@ -62,7 +62,30 @@ const toggleParticipant = (id: string) => {
     selectedParticipants.value = new Set(selectedParticipants.value);
 };
 
-// Calculate per-person amount
+// Calculate splits with proper remainder distribution
+// When dividing amounts that result in periodic numbers (e.g., 4000/3),
+// we distribute the remainder cents among the first participants
+const calculateSplits = () => {
+    if (!form.amount || selectedParticipants.value.size === 0) {
+        return [];
+    }
+    
+    const participantIds = Array.from(selectedParticipants.value);
+    const count = participantIds.length;
+    
+    // Calculate base amount (rounded down to 2 decimals)
+    const totalCents = Math.round(form.amount * 100);
+    const baseCents = Math.floor(totalCents / count);
+    const remainder = totalCents - (baseCents * count);
+    
+    // Distribute: first 'remainder' participants get 1 extra cent
+    return participantIds.map((id, index) => ({
+        participant_id: id,
+        amount: (baseCents + (index < remainder ? 1 : 0)) / 100,
+    }));
+};
+
+// Calculate per-person amount for display (average)
 const equalSplitAmount = computed(() => {
     if (!form.amount || selectedParticipants.value.size === 0) return 0;
     return Math.round((form.amount / selectedParticipants.value.size) * 100) / 100;
@@ -72,10 +95,7 @@ const equalSplitAmount = computed(() => {
 watch(
     [() => form.amount, selectedParticipants],
     () => {
-        form.splits = Array.from(selectedParticipants.value).map((id) => ({
-            participant_id: id,
-            amount: equalSplitAmount.value,
-        }));
+        form.splits = calculateSplits();
     },
     { immediate: true }
 );
