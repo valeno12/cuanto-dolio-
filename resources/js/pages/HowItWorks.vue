@@ -278,12 +278,14 @@ const steps = [
 const nextStep = () => {
     if (currentStep.value < steps.length - 1) {
         currentStep.value++;
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 };
 
 const prevStep = () => {
     if (currentStep.value > 0) {
         currentStep.value--;
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 };
 
