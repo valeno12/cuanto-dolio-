@@ -114,7 +114,7 @@ const confirmPayment = async () => {
         showPaymentModal.value = false;
         payingSettlement.value = null;
         await fetchSettlements();
-    } catch (err) {
+    } catch {
         toast.error('Error al registrar el pago');
     } finally {
         isSubmitting.value = false;

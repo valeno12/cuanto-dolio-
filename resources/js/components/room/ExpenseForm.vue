@@ -2,7 +2,7 @@
 import Avatar from '@/components/ui/Avatar.vue';
 import Button from '@/components/ui/Button.vue';
 import Input from '@/components/ui/Input.vue';
-import { CATEGORIES, getCategory } from '@/constants/categories'; // Assume alias setup or relative path
+import { CATEGORIES } from '@/constants/categories';
 import type { Expense, Participant, Room } from '@/types';
 import { useForm } from '@inertiajs/vue3';
 import { computed, ref, watch } from 'vue';

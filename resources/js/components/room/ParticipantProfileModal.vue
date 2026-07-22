@@ -31,14 +31,6 @@ const formatCurrency = (amount: string | number): string => {
     }).format(num);
 };
 
-// Format date
-const formatDate = (dateStr: string): string => {
-    return new Intl.DateTimeFormat('es-AR', {
-        day: 'numeric',
-        month: 'short',
-    }).format(new Date(dateStr));
-};
-
 // Get role label
 const roleLabel = computed(() => {
     if (!props.participant) return '';
