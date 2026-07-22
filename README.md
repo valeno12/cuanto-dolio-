@@ -49,7 +49,6 @@ Es un **monolito con SPA embebida** (Inertia): un solo proyecto sirve el backend
 4. Se repite hasta que todos quedan en cero.
 
 El resultado es la **menor cantidad de transferencias** para que el grupo quede a mano.
-
 ---
 
 ## 🏗️ Arquitectura — flujo en tiempo real
