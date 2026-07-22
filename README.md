@@ -132,5 +132,4 @@ Cubre el núcleo de la app — el **cálculo de balances y la simplificación de
 ## 📌 Notas
 
 - **Sin secretos en el repo:** toda la config sensible va por variables de entorno (ver `.env.example`).
-- **CI:** GitHub Actions corre lint y tests en cada push.
 - Las salas viejas se limpian solas con un comando programado (`CleanupExpiredRooms`).
