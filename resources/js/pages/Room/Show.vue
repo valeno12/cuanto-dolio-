@@ -255,15 +255,17 @@ onMounted(() => {
 
                             <button
                                 v-if="isAdmin && room.expenses?.length"
+                                type="button"
                                 @click="handleLockRoom"
-                                class="hidden rounded-xl bg-gradient-to-r from-secondary-500 to-secondary-600 px-8 py-4 font-bold text-white shadow-xl shadow-secondary-500/20 transition-all hover:scale-105 active:scale-95 lg:block"
+                                class="hidden cursor-pointer touch-manipulation rounded-xl bg-gradient-to-r from-secondary-500 to-secondary-600 px-8 py-4 font-bold text-white shadow-xl shadow-secondary-500/20 transition-all select-none hover:scale-105 active:scale-95 lg:block"
                             >
                                 Cerrar Sala y Calcular
                             </button>
                             <button
                                 v-if="isAdmin && room.expenses?.length"
+                                type="button"
                                 @click="handleLockRoom"
-                                class="rounded-xl bg-gradient-to-r from-secondary-500 to-secondary-600 px-6 py-3 font-bold text-white shadow-lg transition-all active:scale-95 lg:hidden"
+                                class="cursor-pointer touch-manipulation rounded-xl bg-gradient-to-r from-secondary-500 to-secondary-600 px-6 py-3 font-bold text-white shadow-lg transition-all select-none active:scale-95 lg:hidden"
                             >
                                 Cerrar Sala
                             </button>
