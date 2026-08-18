@@ -66,21 +66,32 @@ watch(
 
 // Lock room logic (admin)
 const lockingRoom = ref(false);
+const showLockConfirmation = ref(false);
+
+const requestLockRoom = () => {
+    if (!isAdmin.value || isLocked.value || lockingRoom.value) return;
+    showLockConfirmation.value = true;
+};
+
+const cancelLockRoom = () => {
+    if (!lockingRoom.value) showLockConfirmation.value = false;
+};
+
 const handleLockRoom = () => {
-    if (!isAdmin.value || isLocked.value) return;
-    if (confirm('¿Cerrar la sala y calcular deudas?')) {
-        lockingRoom.value = true;
-        router.post(
-            `/${props.room.code}/lock`,
-            {},
-            {
-                onFinish: () => {
-                    lockingRoom.value = false;
-                    activeTab.value = 'settlement';
-                },
+    if (!isAdmin.value || isLocked.value || lockingRoom.value) return;
+
+    lockingRoom.value = true;
+    router.post(
+        `/${props.room.code}/lock`,
+        {},
+        {
+            onFinish: () => {
+                lockingRoom.value = false;
+                showLockConfirmation.value = false;
+                activeTab.value = 'settlement';
             },
-        );
-    }
+        },
+    );
 };
 
 // Welcome modal for new rooms (admin with no expenses and 1 participant)
@@ -200,10 +211,11 @@ onMounted(() => {
                     </div>
                     <button
                         v-else-if="isAdmin && room.expenses?.length && activeTab === 'settlement'"
-                        @click="handleLockRoom"
-                        class="rounded-xl bg-gradient-to-r from-secondary-500 to-secondary-600 px-6 py-2.5 font-bold text-white shadow-lg shadow-secondary-500/20 transition-all hover:scale-105 active:scale-95"
-                    >
-                        🔒 Cerrar Sala y Calcular
+                        type="button"
+                        :disabled="lockingRoom"
+                        @click="requestLockRoom"
+                        class="cursor-pointer touch-manipulation rounded-xl bg-gradient-to-r from-secondary-500 to-secondary-600 px-6 py-2.5 font-bold text-white shadow-lg shadow-secondary-500/20 transition-all select-none hover:scale-105 active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
+                    >                        {{ lockingRoom ? 'Procesando…' : '🔒 Cerrar Sala y Calcular' }}
                     </button>
                     <!-- Current User badge -->
                     <div class="flex items-center gap-3 border-l border-white/5 pl-6">
@@ -256,18 +268,20 @@ onMounted(() => {
                             <button
                                 v-if="isAdmin && room.expenses?.length"
                                 type="button"
-                                @click="handleLockRoom"
+                                :disabled="lockingRoom"
+                                v-on:click="requestLockRoom"
                                 class="hidden cursor-pointer touch-manipulation rounded-xl bg-gradient-to-r from-secondary-500 to-secondary-600 px-8 py-4 font-bold text-white shadow-xl shadow-secondary-500/20 transition-all select-none hover:scale-105 active:scale-95 lg:block"
                             >
-                                Cerrar Sala y Calcular
+                                {{ lockingRoom ? 'Procesando…' : 'Cerrar Sala y Calcular' }}
                             </button>
                             <button
                                 v-if="isAdmin && room.expenses?.length"
                                 type="button"
-                                @click="handleLockRoom"
+                                :disabled="lockingRoom"
+                                v-on:click="requestLockRoom"
                                 class="cursor-pointer touch-manipulation rounded-xl bg-gradient-to-r from-secondary-500 to-secondary-600 px-6 py-3 font-bold text-white shadow-lg transition-all select-none active:scale-95 lg:hidden"
                             >
-                                Cerrar Sala
+                                {{ lockingRoom ? 'Procesando…' : 'Cerrar Sala' }}
                             </button>
                         </div>
                         <PaymentDashboard v-else ref="paymentDashboard" :room-code="room.code" :is-admin="isAdmin" :is-locked="isLocked" />
@@ -291,5 +305,21 @@ onMounted(() => {
 
         <!-- Welcome Modal for new rooms -->
         <WelcomeModal v-model:open="showWelcomeModal" :room="room" />
+
+        <Teleport to="body">
+            <div v-if="showLockConfirmation" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4" role="presentation" @click.self="cancelLockRoom">
+                <div class="w-full max-w-md rounded-2xl border border-white/10 bg-slate-900 p-6 text-white shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="lock-room-title">
+                    <h2 id="lock-room-title" class="text-xl font-bold">¿Cerrar la sala?</h2>
+                    <p class="mt-3 text-sm text-slate-400">Se calcularán las deudas y ya no se podrán agregar gastos.</p>
+                    <div class="mt-6 flex justify-end gap-3">
+                        <button type="button" class="cursor-pointer touch-manipulation rounded-xl px-4 py-2.5 font-semibold select-none hover:bg-white/10 disabled:opacity-50" :disabled="lockingRoom" v-on:click="cancelLockRoom">Cancelar</button>
+                        <button type="button" class="cursor-pointer touch-manipulation rounded-xl bg-secondary-500 px-4 py-2.5 font-bold select-none hover:bg-secondary-600 disabled:opacity-60" :disabled="lockingRoom" v-on:click="handleLockRoom">
+                            <span v-if="lockingRoom" class="mr-2 inline-block h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" aria-hidden="true"></span>
+                            {{ lockingRoom ? "Procesando…" : "Cerrar sala" }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </Teleport>
     </div>
 </template>
