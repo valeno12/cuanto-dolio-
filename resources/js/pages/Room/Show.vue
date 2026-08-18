@@ -119,9 +119,9 @@ onMounted(() => {
                     </span>
                     <span class="capitalize">{{ tab === 'expenses' ? 'Gastos' : tab === 'settlement' ? 'Pagos' : 'Perfil' }}</span>
                 </button>
-                
+
                 <!-- How it works link -->
-                <Link 
+                <Link
                     href="/como-funciona"
                     class="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-slate-500 transition-all hover:bg-white/5 hover:text-slate-300"
                 >
@@ -156,13 +156,13 @@ onMounted(() => {
 
                     <div class="flex items-center gap-3">
                         <!-- Help button -->
-                        <Link 
+                        <Link
                             href="/como-funciona"
                             class="flex h-9 w-9 items-center justify-center rounded-full bg-white/5 text-lg hover:bg-white/10"
                         >
                             ❓
                         </Link>
-                        
+
                         <div v-if="isLocked" class="rounded-full border border-red-500/20 bg-red-500/10 px-3 py-1 text-xs font-bold text-red-400">
                             Cerrada
                         </div>
